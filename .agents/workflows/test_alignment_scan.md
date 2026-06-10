@@ -43,11 +43,13 @@ When the user types `/test_alignment` execute the following sequential steps to 
 
 ### Step 2: Ecosystem Evaluation Loop
 For each repository in the target list, execute the following sub-steps sequentially using MCP tools:
-1. **Directory Validation**: Call `github__get_repository_content` for the root path. Check for the existence of testing directories.
-2. **Structural Comparison**: If test files exist, fetch content via `github__get_file_contents`. Assess if files align with the `colcon-core` implementation rules.
-3. **Classification**: Categorize the repository into one of two groups:
-    * `Missing Tests`: No testing framework or files found.
-    * `Refactor Required`: Tests exist but use outdated patterns or lack alignment with the reference PR logic.
+1. Directory Validation: Invoke github__get_repository_content for the root path. Verify the presence of testing directories and configuration files.
+2. Structural Comparison: If test files are present, retrieve code layouts and sample implementations via github__get_file_contents. Assess syntax, fixture usage, and architectural alignment against the colcon-core reference PR.
+3. Ecosystem Categorization: Classify each repository into exactly one of the following standardized statuses based on the analysis:
+  * Fully Compliant: Existing test suites match the reference PR logic and require no modification.
+  * Alignment Required: Test assets exist, but architectural refactoring is necessary to comply with the updated design patterns.
+  * Missing Implementation: The repository completely lacks test coverage or the specific tier of testing introduced in the reference configuration.
+  * Not Applicable (N/A): The specified testing paradigm is irrelevant due to the repository's distinct architectural scope or language constraints.
 
 ### Step 3: Synthesis and Report Generation
 1. Compile the granular repository analysis into a structured Markdown document tracking the justification for each classification.
@@ -62,7 +64,6 @@ For each repository in the target list, execute the following sub-steps sequenti
     git commit -m "docs: add colcon ecosystem test alignment analysis"
     git push origin feature/test-walkthrough-analysis
     ```
-3. Use MCP tool `github__create_pull_request` to open a Pull Request targeting `main` in the orchestrator repository.
 
 ---
 
