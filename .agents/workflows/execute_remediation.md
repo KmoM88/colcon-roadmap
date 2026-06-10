@@ -38,13 +38,26 @@ For each submodule:
    ```bash
    cd remediation/<repo-name>
    ```
-2. Execute tests using pytest:
+2. Create and activate a clean virtual environment specifically for this submodule:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install the submodule in editable mode along with testing requirements and dependency baselines:
+   ```bash
+   pip install --upgrade pip setuptools
+   pip install -e .[test]
+   # Install any additional required packages if not pulled by editable install
+   pip install pytest pytest-cov colcon-core
+   ```
+4. Execute tests using pytest:
    ```bash
    pytest
    ```
-3. Confirm that the test suite compiles and runs successfully, with 100% test pass rate. If errors occur, troubleshoot and fix.
-4. Return to the workspace root:
+5. Confirm that the test suite compiles and runs successfully, with 100% test pass rate. If errors occur, troubleshoot and fix.
+6. Deactivate the virtual environment and return to the workspace root:
    ```bash
+   deactivate
    cd ../..
    ```
 
