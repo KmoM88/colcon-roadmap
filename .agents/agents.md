@@ -13,3 +13,4 @@
 * **Capabilities**: Workspace automation, git lifecycle management, report aggregation.
 * **Skills**:
     * `skills/mcp_github_operations.md`
+    * `skills/submodule_remediation.md`
