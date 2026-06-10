@@ -1,0 +1,12 @@
+[submodule "remediation/colcon-cmake"]
+	path = remediation/colcon-cmake
+	url = https://github.com/KmoM88/colcon-cmake.git
+[submodule "remediation/colcon-library-path"]
+	path = remediation/colcon-library-path
+	url = https://github.com/KmoM88/colcon-library-path.git
+[submodule "remediation/colcon-python-setup-py"]
+	path = remediation/colcon-python-setup-py
+	url = https://github.com/KmoM88/colcon-python-setup-py.git
+[submodule "remediation/colcon-ros"]
+	path = remediation/colcon-ros
+	url = https://github.com/KmoM88/colcon-ros.git
