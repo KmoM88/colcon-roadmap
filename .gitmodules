@@ -1,0 +1,69 @@
+[submodule "submodules/colcon-core"]
+	path = submodules/colcon-core
+	url = git@github.com:colcon/colcon-core.git
+[submodule "submodules/colcon-python-project"]
+	path = submodules/colcon-python-project
+	url = git@github.com:colcon/colcon-python-project.git
+[submodule "submodules/kmom88-colcon-core"]
+	path = submodules/kmom88-colcon-core
+	url = git@github.com:KmoM88/colcon-core.git
+[submodule "submodules/colcon-common-extensions"]
+	path = submodules/colcon-common-extensions
+	url = git@github.com:colcon/colcon-common-extensions.git
+[submodule "submodules/colcon-python-setup-py"]
+	path = submodules/colcon-python-setup-py
+	url = git@github.com:colcon/colcon-python-setup-py.git
+[submodule "submodules/colcon-ros"]
+	path = submodules/colcon-ros
+	url = git@github.com:colcon/colcon-ros.git
+[submodule "submodules/colcon-cmake"]
+	path = submodules/colcon-cmake
+	url = git@github.com:colcon/colcon-cmake.git
+[submodule "submodules/colcon-clean"]
+	path = submodules/colcon-clean
+	url = git@github.com:colcon/colcon-clean.git
+[submodule "submodules/colcon-package-selection"]
+	path = submodules/colcon-package-selection
+	url = git@github.com:colcon/colcon-package-selection.git
+[submodule "submodules/colcon-package-information"]
+	path = submodules/colcon-package-information
+	url = git@github.com:colcon/colcon-package-information.git
+[submodule "submodules/colcon-recursive-crawl"]
+	path = submodules/colcon-recursive-crawl
+	url = git@github.com:colcon/colcon-recursive-crawl.git
+[submodule "submodules/colcon-parallel-executor"]
+	path = submodules/colcon-parallel-executor
+	url = git@github.com:colcon/colcon-parallel-executor.git
+[submodule "submodules/colcon-test-result"]
+	path = submodules/colcon-test-result
+	url = git@github.com:colcon/colcon-test-result.git
+[submodule "submodules/colcon-output"]
+	path = submodules/colcon-output
+	url = git@github.com:colcon/colcon-output.git
+[submodule "submodules/colcon-metadata"]
+	path = submodules/colcon-metadata
+	url = git@github.com:colcon/colcon-metadata.git
+[submodule "submodules/colcon-library-path"]
+	path = submodules/colcon-library-path
+	url = git@github.com:colcon/colcon-library-path.git
+[submodule "submodules/colcon-defaults"]
+	path = submodules/colcon-defaults
+	url = git@github.com:colcon/colcon-defaults.git
+[submodule "submodules/colcon-argcomplete"]
+	path = submodules/colcon-argcomplete
+	url = git@github.com:colcon/colcon-argcomplete.git
+[submodule "submodules/colcon-bash"]
+	path = submodules/colcon-bash
+	url = git@github.com:colcon/colcon-bash.git
+[submodule "submodules/colcon-zsh"]
+	path = submodules/colcon-zsh
+	url = git@github.com:colcon/colcon-zsh.git
+[submodule "submodules/colcon-powershell"]
+	path = submodules/colcon-powershell
+	url = git@github.com:colcon/colcon-powershell.git
+[submodule "submodules/colcon-cargo"]
+	path = submodules/colcon-cargo
+	url = git@github.com:colcon/colcon-cargo.git
+[submodule "submodules/colcon-devtools"]
+	path = submodules/colcon-devtools
+	url = git@github.com:colcon/colcon-devtools.git
