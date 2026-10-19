@@ -93,8 +93,10 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
   `test_package_identification_pep621.py` (2 tests) and `test_package_augmentation_pep621.py` (4 tests) pass cleanly.
 * **Build Task Tests (`test_task_python_project_build.py`)**:
   Previously marked with `@pytest.mark.asyncio`, which caused failures in standard `colcon-core` environments. Replaced with `from .run_until_complete import run_until_complete` in fork commit `816a0d3`. All 3 build task tests now pass cleanly.
-* **Overall Unit Test Suite**:
-  All 19 related unit tests (`install_wheel`, `remove_wheel`, `identification`, `augmentation`, `build_task`) pass at 100% (19 passed in 0.94s). Code style and import order validated with `flake8` without warnings.
+* **End-to-End Integration Tests (`test_integration_pep621.py`)**:
+  Added comprehensive tests with real backends (`flit_core.buildapi` and `hatchling.build`). Validated pure PEP 621 packages, console script wrappers in `bin/` with executable bits, clean idempotent rebuilds via `remove_distributions`, and editable `--symlink-install` via `build_editable` with PEP 610 `direct_url.json`. (Branch `feature/pep621-integration-tests`, commit `c40901a`).
+* **Overall Test Suite**:
+  All 23 related unit and integration tests pass at 100% (23 passed in 0.74s). Code style and import order validated with `flake8` with 0 warnings.
 
 ---
 

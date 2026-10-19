@@ -43,34 +43,23 @@ To structure the remaining work without risking regressions and ensuring clean u
 
 ---
 
-## Phase 2: Integration Testing with Real Packages & Submodules [IN PROGRESS]
+## Phase 2: Integration Testing with Real Packages & Submodules [COMPLETED]
 
-* **Active Feature Branch**: `feature/pep621-integration-tests` in `submodules/kmom88-colcon-core`.
+* **Feature Branch**: `feature/pep621-integration-tests` in `submodules/kmom88-colcon-core` (Commit `c40901a`).
+* **Test Suite Added**: `test/test_integration_pep621.py` (Passed 4/4 integration tests, 23/23 total suite tests).
 
-To verify end-to-end functionality beyond unit tests, test the full build lifecycle using real Python packages.
+### Validated Test Scenarios
 
-### Test Matrix
-
-| Test Case | Build Backend | Features Tested | Verification Criteria |
+| Test Case | Build Backend | Features Tested | Verification Result |
 | :--- | :--- | :--- | :--- |
-| **Case A: Minimal PEP 621** | `flit_core` | Pure `pyproject.toml`, no `setup.py` | Package discovered as `python.project`, wheel built and installed in `install/`. |
-| **Case B: Console Scripts** | `hatchling` | Entry point CLI generation | Wrapper generated in `install/bin/`, executable bit set (`0o755`), script executes correctly. |
-| **Case C: Data Files** | `setuptools.build_meta` | Data files mapped to `share/` | Data files placed into `install/share/<pkg_name>/`. |
-| **Case D: Clean Rebuild** | Any | Idempotent build & `remove_distributions` | Modifying/removing files and rebuilding cleanly removes stale files without residuals. |
-| **Case E: Self-Hosted Submodule** | Setuptools | Converting a submodule (e.g. `colcon-output`) | Verified building a core colcon extension using the new pipeline. |
-
-### Execution Workflow
-1. Create mock package fixtures under `test/fixtures/` or in a temporary test directory.
-2. Invoke `colcon build` with the development version of `colcon-core` loaded:
-   ```bash
-   colcon build --packages-select sample_flit_pkg
-   ```
-3. Inspect the resulting `install/` directory and test execution of any generated CLI entry points.
-4. Integrate the test scenarios into `test/test_integration_pep621.py` or run as an automated test script.
+| **`test_integration_flit_core_minimal`** | `flit_core.buildapi` | Pure PEP 621, identification, wheel generation, installation, runtime import | **PASSED** (0.45s) |
+| **`test_integration_hatchling_cli_scripts`** | `hatchling.build` | `[project.scripts]` entry points, execution wrapper in `bin/`, `0o755` permissions | **PASSED** (CLI output verified) |
+| **`test_integration_clean_rebuild`** | `flit_core.buildapi` | Idempotent builds & `remove_distributions` ensuring deleted source files vanish from `install/` | **PASSED** (residual files purged) |
+| **`test_integration_symlink_install_editable`** | `hatchling.build` | `--symlink-install` calling `build_editable`, PEP 610 `direct_url.json`, live editing | **PASSED** (live updates verified) |
 
 ---
 
-## Phase 3: Upstream Alignment & PR Submission
+## Phase 3: Upstream Alignment & PR Submission [IN PROGRESS]
 
 * **Active Feature Branch**: `feature/pep621-upstream-pr` in `submodules/kmom88-colcon-core`.
 
