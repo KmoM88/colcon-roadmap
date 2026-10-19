@@ -70,8 +70,13 @@ Once the implementation is validated with real backends:
 2. **Engage with Upstream on Issue #736**:
    * Post a comprehensive technical update on upstream issue [#736](https://github.com/colcon/colcon-core/issues/736) reporting full test suite passes (19/19 + integration tests).
    * Propose opening a PR targeting `colcon/colcon-core:master` (or alternatively providing a PR directly into Scott Logan's `cottsay/pep621` fork branch).
-3. **Open Pull Request**:
-   * Submit the PR with detailed testing evidence, rationale for `run_until_complete` over `pytest-asyncio`, and verification with multiple backends.
+3. **Feature Flag Rollout Strategy (`COLCON_FEATURE_FLAGS`)**:
+   * `colcon-core` provides a native feature flag mechanism via `colcon_core.feature_flags.is_feature_flag_set` (controlled by `COLCON_FEATURE_FLAGS`).
+   * **Proposal for Upstream Merge**: If maintainers express caution regarding potential workspace side-effects, offer to guard `PEP621PackageIdentification` behind a feature flag (e.g. `is_feature_flag_set('pep621_builds')` or `python_project`).
+   * When unset, legacy workspaces remain completely untouched; when set (or once promoted to `IMPLEMENTED_FLAGS` in a subsequent minor release), standard Python discovery activates.
+   * This gives maintainers a zero-risk path to merge the code into `colcon-core:master` without waiting for a breaking release.
+4. **Open Pull Request**:
+   * Submit the PR with detailed testing evidence, rationale for `run_until_complete` over `pytest-asyncio`, verification with multiple backends, and the feature flag option.
 
 ---
 

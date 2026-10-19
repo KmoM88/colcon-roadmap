@@ -56,6 +56,7 @@ The ongoing work is organized into dedicated feature branches across `colcon-cor
   - Call `install_wheel` to install the generated `.whl` into the target `install_base`.
   - Ensure CLI flags (`--install-base`, `--symlink-install` fallbacks) are respected.
 * **Validation**: Fixed async test runner via `run_until_complete`. All build task tests pass cleanly (3/3 tests). Ready for integration tests with real packages.
+* **Feature Flag Guard (`COLCON_FEATURE_FLAGS`)**: Available as an optional transition safeguard via `is_feature_flag_set('pep621_builds')` to facilitate upstream merge without risk of breaking existing workspaces.
 
 ### Feature 3: PEP 660 Editable Installation (`--symlink-install`) & Data Files
 * **Status**: In progress / Planned (`feature/pep660-editable-data-files`).
