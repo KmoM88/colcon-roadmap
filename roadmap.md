@@ -29,7 +29,17 @@ This roadmap outlines the plan to bring modern Python packaging standards (PEP 5
 
 ---
 
-## 3. Active & Next Features
+## 3. Active & Next Features (Feature Branches Architecture)
+
+The ongoing work is organized into dedicated feature branches across `colcon-core` and `colcon-ros`:
+
+| Feature Branch | Repository | Status | Focus |
+| :--- | :--- | :--- | :--- |
+| `cottsay/pep621` (`816a0d3`) | `KmoM88/colcon-core` | **Validated in Fork** | PEP 621 identification, augmentation, build task & runner fix |
+| `feature/pep621-integration-tests` | `KmoM88/colcon-core` | **Active / Next** | Real multi-backend fixtures (`flit`, `hatchling`, `setuptools`) |
+| `feature/pep621-upstream-pr` | `KmoM88/colcon-core` | **Pending Phase 2** | Upstream PR to `colcon/colcon-core:master` / Scott Logan |
+| `feature/pep660-editable-data-files` | `KmoM88/colcon-core` | **Planned** | Editable installs & symlinked data files |
+| `feature/ros-ament-python-project` | `KmoM88/colcon-ros` | **Planned** | Modernization of `ament_python` to accept PEP 621 |
 
 ### Feature 1: PEP 621 Package Identification & Augmentation
 * **Status**: Implemented & Validated in fork (branch `cottsay/pep621`, commit `816a0d3`).
@@ -47,11 +57,18 @@ This roadmap outlines the plan to bring modern Python packaging standards (PEP 5
   - Ensure CLI flags (`--install-base`, `--symlink-install` fallbacks) are respected.
 * **Validation**: Fixed async test runner via `run_until_complete`. All build task tests pass cleanly (3/3 tests). Ready for integration tests with real packages.
 
-### Feature 3: PEP 660 Editable Installation (`--symlink-install`)
+### Feature 3: PEP 660 Editable Installation (`--symlink-install`) & Data Files
+* **Status**: In progress / Planned (`feature/pep660-editable-data-files`).
 * **Scope**:
   - Invoke `build_editable` hook when `--symlink-install` is specified.
   - Graceful fallback to standard wheel install if the backend does not support `build_editable`.
   - Resolve the ROS data file linking gap: ensure non-Python assets (`launch/`, `urdf/`, `config/`) in `share/` remain symlinked or live-editable.
+
+### Feature 4: ROS 2 `ament_python` with Standard Python Builds
+* **Status**: Planned (`feature/ros-ament-python-project` in `colcon-ros`).
+* **Scope**:
+  - Detect `package.xml` (`<build_type>ament_python</build_type>`) packages using `pyproject.toml` without `setup.py`.
+  - Bridge `colcon-ros` with `PythonProjectBuildTask` while preserving ROS-specific index registration and environment hooks.
 
 ---
 

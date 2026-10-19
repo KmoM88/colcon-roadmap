@@ -30,7 +30,22 @@ Scott Logan's branch `origin/cottsay/pep621` provides the core implementation of
 
 ---
 
+## 2. Feature Branches & Multi-Repository Architecture
+
+To structure the remaining work without risking regressions and ensuring clean upstream contributions, the development is organized across dedicated feature branches in the forks of `colcon-core` and `colcon-ros`:
+
+| Repository | Fork Target | Base Branch | Feature Branch | Objective |
+| :--- | :--- | :--- | :--- | :--- |
+| **`colcon-core`** | `KmoM88/colcon-core` | `cottsay/pep621` (`816a0d3`) | `feature/pep621-integration-tests` | Automated end-to-end integration tests using real backends (`flit_core`, `hatchling`, `setuptools`). |
+| **`colcon-core`** | `KmoM88/colcon-core` | `feature/pep621-integration-tests` | `feature/pep621-upstream-pr` | Rebased, clean branch against upstream `colcon/colcon-core:master` formatted for PR submission. |
+| **`colcon-core`** | `KmoM88/colcon-core` | `feature/pep621-upstream-pr` | `feature/pep660-editable-data-files` | Handling `--symlink-install` and data files (`share/`) for editable installations. |
+| **`colcon-ros`** | `KmoM88/colcon-ros` | `upstream/master` | `feature/ros-ament-python-project` | Adapter in `colcon-ros` so packages with `<build_type>ament_python</build_type>` and `pyproject.toml` use standard Python build tasks. |
+
+---
+
 ## Phase 2: Integration Testing with Real Packages & Submodules [IN PROGRESS]
+
+* **Active Feature Branch**: `feature/pep621-integration-tests` in `submodules/kmom88-colcon-core`.
 
 To verify end-to-end functionality beyond unit tests, test the full build lifecycle using real Python packages.
 
@@ -45,40 +60,64 @@ To verify end-to-end functionality beyond unit tests, test the full build lifecy
 | **Case E: Self-Hosted Submodule** | Setuptools | Converting a submodule (e.g. `colcon-output`) | Verified building a core colcon extension using the new pipeline. |
 
 ### Execution Workflow
-1. Create mock package fixtures under `test/fixtures/` or a temporary workspace directory:
-   ```
-   workspace/
-   └── src/
-       └── sample_flit_pkg/
-           ├── pyproject.toml
-           └── sample_flit_pkg/
-               └── __init__.py
-   ```
+1. Create mock package fixtures under `test/fixtures/` or in a temporary test directory.
 2. Invoke `colcon build` with the development version of `colcon-core` loaded:
    ```bash
    colcon build --packages-select sample_flit_pkg
    ```
 3. Inspect the resulting `install/` directory and test execution of any generated CLI entry points.
+4. Integrate the test scenarios into `test/test_integration_pep621.py` or run as an automated test script.
 
 ---
 
 ## Phase 3: Upstream Alignment & PR Submission
 
-Once the implementation is validated and test-covered:
-1. **Prepare Pull Request**:
-   * Compare `cottsay/pep621` + test fixes against `colcon/colcon-core:master`.
-   * Ensure documentation and docstrings are complete.
+* **Active Feature Branch**: `feature/pep621-upstream-pr` in `submodules/kmom88-colcon-core`.
+
+Once the implementation is validated with real backends:
+1. **Rebase & Polish**:
+   * Rebase branch onto latest `colcon/colcon-core:master` (`6bfb100+`).
+   * Preserve Scott Logan (`cottsay`) commit authorship for original PEP 621 groundwork (`80acf29`) and include co-authored/subsequent commits for the test runner fix (`816a0d3`) and integration suite.
 2. **Engage with Upstream on Issue #736**:
-   * Post an update on issue #736 documenting the verification of the PEP 621 pipeline and offering test results / PR collaboration.
-   * Coordinate with Scott Logan (`cottsay`) regarding whether to submit a PR directly targeting `master` or providing fixes into his branch.
+   * Post a comprehensive technical update on upstream issue [#736](https://github.com/colcon/colcon-core/issues/736) reporting full test suite passes (19/19 + integration tests).
+   * Propose opening a PR targeting `colcon/colcon-core:master` (or alternatively providing a PR directly into Scott Logan's `cottsay/pep621` fork branch).
+3. **Open Pull Request**:
+   * Submit the PR with detailed testing evidence, rationale for `run_until_complete` over `pytest-asyncio`, and verification with multiple backends.
 
 ---
 
-## Phase 4: PEP 660 Editable Installation & Data Files
+## Phase 4: PEP 660 Editable Installations & Non-Python Data Files
 
-Once standard builds are solid, tackle the remaining editable gap:
+* **Active Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core`.
+
+Once standard builds are solid, close the remaining editable gaps:
 1. **Backend Editable Compatibility**:
    * Verify how backends (`setuptools`, `flit_core`, `hatchling`) generate editable wheels via `build_editable`.
-   * Validate PEP 610 `direct_url.json` recording.
-2. **ROS Data File Symlinking**:
-   * Assess how non-Python assets (`launch/`, `urdf/`, `config/`) in ROS packages can maintain live editability without requiring manual rebuilds.
+   * Validate PEP 610 `direct_url.json` (`{"dir_info": {"editable": true}}`) writing.
+2. **Non-Python Asset Symlinking (ROS Data Files)**:
+   * PEP 660 only makes Python code live-editable via `.pth` or loader hooks. Assets copied into `share/` are static in the wheel.
+   * Design a mechanism to ensure non-code files (such as ROS launch files, URDFs, configurations) can be optionally symlinked to the source directory when `--symlink-install` is used.
+
+---
+
+## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros`
+
+* **Active Feature Branch**: `feature/ros-ament-python-project` in `submodules/colcon-ros` (`KmoM88/colcon-ros`).
+
+To enable ROS 2 packages to take full advantage of Python standard packaging:
+1. **Identify `ament_python` with `pyproject.toml`**:
+   * In `colcon-ros`, inspect packages with `<build_type>ament_python</build_type>` in `package.xml`.
+   * If a `pyproject.toml` with `[project]` is present and no `setup.py` exists, route package building to the modern pipeline.
+2. **Implement `AmentPythonProjectBuildTask`**:
+   * Create an ament task that delegates to `PythonProjectBuildTask` from `colcon-core`.
+   * Automatically append `AMENT_PREFIX_PATH` hooks and verify the `package index` registration in `<install_base>/share/ament_index/`.
+3. **Testing**:
+   * Validate building a sample ROS 2 package using PEP 621 without `setup.py`.
+
+---
+
+## Phase 6: Deprecation and Archival of `colcon-python-project`
+
+Once native support is merged in `colcon-core` and `colcon-ros`:
+1. Document the deprecation of the monolithic prototype repository (`colcon/colcon-python-project`).
+2. Close PR #1 in `colcon-python-project` pointing to the official native implementation in `colcon-core`.
