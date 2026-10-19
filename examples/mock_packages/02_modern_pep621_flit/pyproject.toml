@@ -1,0 +1,16 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "modern_flit_pkg"
+version = "0.1.0"
+description = "Pure PEP 621 package using flit_core"
+readme = "README.md"
+authors = [
+    { name = "Colcon Modernization Team", email = "team@example.com" }
+]
+dependencies = []
+
+[project.scripts]
+modern-cli = "modern_flit_pkg.cli:main"

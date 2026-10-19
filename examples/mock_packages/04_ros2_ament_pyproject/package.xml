@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>ros_pyproject_pkg</name>
+  <version>0.2.0</version>
+  <description>Modern ROS 2 ament_python package built with pyproject.toml and no setup.py</description>
+  <maintainer email="dev@example.com">ROS 2 Modernization Dev</maintainer>
+  <license>Apache-2.0</license>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

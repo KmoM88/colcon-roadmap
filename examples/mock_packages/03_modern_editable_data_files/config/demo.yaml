@@ -1,0 +1,5 @@
+# Parameters YAML mock
+pipeline:
+  rate_hz: 50
+  debug_mode: true
+  description: "Initial config"

@@ -55,3 +55,20 @@ All PR materials (titles, descriptions, test logs, and comparison links) are for
 
 * **`colcon-core`**: 24/24 unit and integration tests passing (`pytest`) in 0.70s; `flake8` clean (0 warnings).
 * **`colcon-ros`**: 1/1 integration tests passing in 0.13s; `flake8` clean (0 warnings).
+
+---
+
+## 🔬 Hands-On Mock Packages & Walkthrough Guide
+
+To understand and test the behavior across all variations—from legacy `setup.py` packages to modern PEP 621 wheels, editable installs with live symlinked data files, and ROS 2 `ament_python`—a dedicated suite of mock packages and an automated demonstration runner are provided:
+
+* **Comprehensive Guide**: [docs/guide/mock_packages_walkthrough.md](docs/guide/mock_packages_walkthrough.md)
+* **Mock Packages**: [examples/mock_packages/](examples/mock_packages/)
+  - `01_classic_setup_py`: Legacy `setup.py` / `setup.cfg` build lifecycle and egg-info generation.
+  - `02_modern_pep621_flit`: Modern PEP 621 with `flit_core`, in-process wheel extraction, and CLI wrappers in `bin/`.
+  - `03_modern_editable_data_files`: PEP 660 `--symlink-install` with OS symlinks for `share/` launch and config files (live modification without rebuilding).
+  - `04_ros2_ament_pyproject`: Modern ROS 2 `ament_python` package without `setup.py`, preserving `ament_index`, `package.xml`, and environment hooks.
+* **Run Demonstration Script**:
+  ```bash
+  submodules/kmom88-colcon-core/.venv/bin/python3 scripts/test_mock_packages.py
+  ```

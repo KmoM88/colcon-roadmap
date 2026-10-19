@@ -1,0 +1,10 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "data_pkg"
+version = "0.1.0"
+description = "Modern package with editable non-Python data files"
+readme = "README.md"
+dependencies = []
