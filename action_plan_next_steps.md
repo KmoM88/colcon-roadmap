@@ -94,19 +94,16 @@ Once standard builds are solid, close the remaining editable gaps:
 
 ---
 
-## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros`
+## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros` [COMPLETED]
 
-* **Active Feature Branch**: `feature/ros-ament-python-project` in `submodules/colcon-ros` (`KmoM88/colcon-ros`).
-
-To enable ROS 2 packages to take full advantage of Python standard packaging:
-1. **Identify `ament_python` with `pyproject.toml`**:
-   * In `colcon-ros`, inspect packages with `<build_type>ament_python</build_type>` in `package.xml`.
-   * If a `pyproject.toml` with `[project]` is present and no `setup.py` exists, route package building to the modern pipeline.
-2. **Implement `AmentPythonProjectBuildTask`**:
-   * Create an ament task that delegates to `PythonProjectBuildTask` from `colcon-core`.
-   * Automatically append `AMENT_PREFIX_PATH` hooks and verify the `package index` registration in `<install_base>/share/ament_index/`.
-3. **Testing**:
-   * Validate building a sample ROS 2 package using PEP 621 without `setup.py`.
+* **Feature Branch**: `feature/ros-ament-python-project` in `submodules/colcon-ros` (`KmoM88/colcon-ros`, Commit `fc03806`).
+* **Implementation**:
+  - `AmentPythonBuildTask` in `colcon_ros/task/ament_python/build.py` automatically detects packages specifying `<build_type>ament_python</build_type>` with `pyproject.toml` (and no `setup.py`).
+  - Routes execution to `PythonProjectBuildTask` while preserving ROS index registration (`share/ament_index/...`), `package.xml` placement, and `AMENT_PREFIX_PATH` environment hooks.
+* **Testing & Verification**:
+  - Added automated test `test/test_task_ament_python_build.py` exercising an end-to-end `ament_python` build with `flit_core`.
+  - Verified marker creation in `ament_index`, `package.xml` copying, `.dsv` hook creation, and module installation.
+  - Flake8 clean (0 errors) and test passing (`PASSED in 0.13s`).
 
 ---
 

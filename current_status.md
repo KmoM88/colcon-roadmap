@@ -113,7 +113,7 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 | **Python Project Build Task** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Calls `install_wheel` & writes hooks, async tests fixed |
 | **PEP 660 Editable Hooks** | **Partial** | Fork commit `816a0d3` / `cottsay/pep621` | Dispatches `build_editable` + PEP 610 JSON |
 | **ROS Data Files in Editable**| **Open Gap** | In Discussion | Non-Python data files in `share/` |
-| **ROS `ament_python` PEP 621**| **Planned** | `colcon-ros` | Support packages without `setup.py` |
+| **ROS `ament_python` PEP 621**| **Verified** | Fork commit `fc03806` / `colcon-ros` | Native support in `AmentPythonBuildTask` |
 
 ---
 

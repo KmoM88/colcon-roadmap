@@ -66,10 +66,11 @@ The ongoing work is organized into dedicated feature branches across `colcon-cor
   - Resolve the ROS data file linking gap: ensure non-Python assets (`launch/`, `urdf/`, `config/`) in `share/` remain symlinked or live-editable.
 
 ### Feature 4: ROS 2 `ament_python` with Standard Python Builds
-* **Status**: Planned (`feature/ros-ament-python-project` in `colcon-ros`).
+* **Status**: Implemented & Validated in fork (branch `feature/ros-ament-python-project`, commit `fc03806` in `colcon-ros`).
 * **Scope**:
   - Detect `package.xml` (`<build_type>ament_python</build_type>`) packages using `pyproject.toml` without `setup.py`.
   - Bridge `colcon-ros` with `PythonProjectBuildTask` while preserving ROS-specific index registration and environment hooks.
+* **Validation**: Verified end-to-end with `test_task_ament_python_build.py` (passes 100%, 0 flake8 errors). Ready for upstream collaboration.
 
 ---
 
