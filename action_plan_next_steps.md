@@ -80,17 +80,17 @@ Once the implementation is validated with real backends:
 
 ---
 
-## Phase 4: PEP 660 Editable Installations & Non-Python Data Files
+## Phase 4: PEP 660 Editable Installations & Non-Python Data Files [COMPLETED]
 
-* **Active Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core`.
-
-Once standard builds are solid, close the remaining editable gaps:
-1. **Backend Editable Compatibility**:
-   * Verify how backends (`setuptools`, `flit_core`, `hatchling`) generate editable wheels via `build_editable`.
-   * Validate PEP 610 `direct_url.json` (`{"dir_info": {"editable": true}}`) writing.
-2. **Non-Python Asset Symlinking (ROS Data Files)**:
-   * PEP 660 only makes Python code live-editable via `.pth` or loader hooks. Assets copied into `share/` are static in the wheel.
-   * Design a mechanism to ensure non-code files (such as ROS launch files, URDFs, configurations) can be optionally symlinked to the source directory when `--symlink-install` is used.
+* **Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core` (Commit `de2050f`).
+* **Implementation**:
+  - `_get_data_files_mapping(pkg)` in `colcon_core/task/python_project/build.py` extracts non-Python data files defined in `setup.cfg` (`[options.data_files]`) or `pyproject.toml` (`[tool.setuptools.data-files]` and `[tool.hatch.build.targets.wheel.shared-data]`).
+  - When `--symlink-install` is active, invokes `colcon_core.task.install()` to create real symbolic links from source to `install_base` (e.g. `share/<package>/launch`), and registers each installed target into `.dist-info/RECORD`.
+  - Enables true editable workflows for ROS 2 launch files, parameter files, and configuration assets without rebuilding.
+* **Testing & Verification**:
+  - Added `test_integration_symlink_install_data_files` to `test/test_integration_pep621.py`.
+  - Validates live editing of source launch files and verification of symlinks on disk.
+  - All 24 unit & integration tests passing in 0.70s, `flake8` clean (0 errors), pushed to `KmoM88/colcon-core`.
 
 ---
 
