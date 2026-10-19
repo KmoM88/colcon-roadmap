@@ -8,7 +8,8 @@ This document details the exact state of modern Python packaging standards (PEP 
 
 The modernization of Python builds in `colcon-core` has made substantial upstream progress:
 * **PR #741 (Closed & Merged)**: The in-process wheel installation and uninstallation engine was officially merged into `colcon-core` (master, releases 0.21.2 / 0.21.3).
-* **Branch `cottsay/pep621` (Upstream WIP by Scott Logan)**: Implements native PEP 621 package identification, dependency augmentation, and the Python project build task (`PythonProjectBuildTask`), connecting directly to the `install_wheel` engine from PR #741.
+* **Branch `cottsay/pep621` (Upstream by Scott Logan)**: Implements native PEP 621 package identification, dependency augmentation, and the Python project build task (`PythonProjectBuildTask`), connecting directly to the `install_wheel` engine from PR #741.
+* **Fork Branch `KmoM88/colcon-core:cottsay/pep621` (Commit `816a0d3`)**: Fixed async unit tests to adhere to `colcon-core` internal runner (`run_until_complete`), resolved flake8 import issues, verified 100% test suite pass rate (19/19 tests), and pushed to fork.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -23,6 +24,9 @@ The modernization of Python builds in `colcon-core` has made substantial upstrea
 │  ├─ PEP621PackageAugmentation (maps build/run/test dependencies)       │
 │  ├─ PythonProjectBuildTask (builds wheel via hook -> `install_wheel`)  │
 │  └─ PEP 610 Direct URL recording for editable installs (`build_editable)│
+│  ────────────────────────────────────────────────────────────────────  │
+│  [FORK VERIFIED] `KmoM88/colcon-core` (Commit 816a0d3)                 │
+│  └─ Fixed async tests via `run_until_complete`, flake8 clean (19/19)   │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -84,11 +88,13 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 * Generates colcon environment hooks and scripts, updating the `RECORD` index.
 * For editable installs, writes PEP 610 `direct_url.json` (`{"dir_info": {"editable": true}}`) and appends it to `RECORD`.
 
-### D. Current State & Testing Assessment of `cottsay/pep621`
+### D. Testing & Quality Verification Assessment
 * **Identification & Augmentation Tests**:
-  `test_package_identification_pep621.py` and `test_package_augmentation_pep621.py` pass cleanly.
+  `test_package_identification_pep621.py` (2 tests) and `test_package_augmentation_pep621.py` (4 tests) pass cleanly.
 * **Build Task Tests (`test_task_python_project_build.py`)**:
-  Currently marked with `@pytest.mark.asyncio`, which fails in environments lacking `pytest-asyncio` because `colcon-core` standardizes on its internal helper `from .run_until_complete import run_until_complete`. Adjusting the async test calls to use `run_until_complete` aligns it with the rest of the test suite.
+  Previously marked with `@pytest.mark.asyncio`, which caused failures in standard `colcon-core` environments. Replaced with `from .run_until_complete import run_until_complete` in fork commit `816a0d3`. All 3 build task tests now pass cleanly.
+* **Overall Unit Test Suite**:
+  All 19 related unit tests (`install_wheel`, `remove_wheel`, `identification`, `augmentation`, `build_task`) pass at 100% (19 passed in 0.94s). Code style and import order validated with `flake8` without warnings.
 
 ---
 
@@ -100,8 +106,8 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 | **Installed File Discovery** | **Merged** | PR #728 | `InstalledDistribution` |
 | **Wheel Uninstallation** | **Merged** | PR #741 | `remove_distributions` |
 | **Wheel Installation** | **Merged** | PR #741 | `install_wheel`, RECORD writer, entry points |
-| **PEP 621 Identification** | **WIP Upstream** | `cottsay/pep621` | Priority 90, assigns `python.project` |
-| **PEP 621 Augmentation** | **WIP Upstream** | `cottsay/pep621` | Maps `[project.dependencies]` |
-| **Python Project Build Task** | **WIP Upstream** | `cottsay/pep621` | Calls `install_wheel` & writes hooks |
-| **PEP 660 Editable Hooks** | **Partial** | `cottsay/pep621` | Dispatches `build_editable` + PEP 610 JSON |
+| **PEP 621 Identification** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Priority 90, assigns `python.project` |
+| **PEP 621 Augmentation** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Maps `[project.dependencies]` |
+| **Python Project Build Task** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Calls `install_wheel` & writes hooks, async tests fixed |
+| **PEP 660 Editable Hooks** | **Partial** | Fork commit `816a0d3` / `cottsay/pep621` | Dispatches `build_editable` + PEP 610 JSON |
 | **ROS Data Files in Editable**| **Open Gap** | In Discussion | Non-Python data files in `share/` |

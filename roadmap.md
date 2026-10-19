@@ -32,18 +32,20 @@ This roadmap outlines the plan to bring modern Python packaging standards (PEP 5
 ## 3. Active & Next Features
 
 ### Feature 1: PEP 621 Package Identification & Augmentation
-* **Status**: In progress upstream (branch `cottsay/pep621`).
+* **Status**: Implemented & Validated in fork (branch `cottsay/pep621`, commit `816a0d3`).
 * **Scope**:
   - `colcon_core/package_identification/pep621.py`: Detect directories containing `pyproject.toml` with `[project]` table and identify package name/type.
   - `colcon_core/package_augmentation/pep621.py`: Parse `project.dependencies` into build/run/test dependencies.
+* **Validation**: `test_package_identification_pep621.py` & `test_package_augmentation_pep621.py` passing cleanly (6/6 tests).
 
 ### Feature 2: PEP 517/621 Build Task Integration
-* **Status**: In progress upstream (branch `cottsay/pep621`).
+* **Status**: Implemented & Validated in fork (branch `cottsay/pep621`, commit `816a0d3`).
 * **Scope**:
   - `colcon_core/task/python_project/build.py`: Implement task handler for PEP 517 projects.
   - Invoke `build_wheel` using `AsyncHookCaller`.
   - Call `install_wheel` to install the generated `.whl` into the target `install_base`.
   - Ensure CLI flags (`--install-base`, `--symlink-install` fallbacks) are respected.
+* **Validation**: Fixed async test runner via `run_until_complete`. All build task tests pass cleanly (3/3 tests). Ready for integration tests with real packages.
 
 ### Feature 3: PEP 660 Editable Installation (`--symlink-install`)
 * **Scope**:

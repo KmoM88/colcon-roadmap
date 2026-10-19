@@ -39,19 +39,18 @@
 
 ## 2. Definición de Veredicto y Criterio de Madurez
 
-### Dictamen: **PEDIR CAMBIOS (Changes Requested / In Progress)**
+### Dictamen: **APROBADO PARA UPSTREAM PR (Approved / Ready for Integration)**
 
 * **Lista de Verificación de Criterios**:
   - [x] **Arquitectura y Diseño**: Excelente diseño modular, aprovechando limpiamente los puntos de extensión de `colcon-core`.
   - [x] **Retrocompatibilidad**: Rigurosamente protegida mediante la prioridad de extensiones (100 vs 90).
   - [x] **Identificación y Aumento**: Tests unitarios aprobados al 100% (`test_package_identification_pep621.py` y `test_package_augmentation_pep621.py`).
-  - [ ] **Suite de Tests de Build Task (Bloqueante para Merge)**: `test/test_task_python_project_build.py` utiliza `@pytest.mark.asyncio`, lo que provoca error en el harness estándar de `colcon-core` (que no incluye `pytest-asyncio` en sus dependencias de test).
-  - [ ] **Validación con Paquetes Reales**: Requiere comprobación end-to-end con backends reales (`flit_core`, `hatchling`).
+  - [x] **Suite de Tests de Build Task (Subsanado en Fork)**: Se reemplazó `@pytest.mark.asyncio` por `run_until_complete` en commit `816a0d3` (`test/test_task_python_project_build.py`). Pasa 3/3 tests sin dependencias externas.
+  - [x] **Linter y Formato**: Código y orden de imports formateados según `flake8` sin advertencias.
+  - [ ] **Validación con Paquetes Reales**: Fase siguiente (testing end-to-end con `flit_core` y `hatchling`).
 
-* **Justificación del Veredicto y Cambios Mandatorios**:
-  La rama implementa la arquitectura correcta y el código de producción está listo. Sin embargo, no puede abrirse un PR listo para merge hasta subsanar la falla en los tests:
-  1. **Mandatorio**: Reemplazar `@pytest.mark.asyncio` en `test_task_python_project_build.py` por el helper canónico del proyecto `from .run_until_complete import run_until_complete`.
-  2. **Recomendado**: Validar builds reales con un paquete mínimo de ejemplo en un workspace de prueba.
+* **Justificación del Veredicto y Estado de Cambios**:
+  Los cambios mandatorios identificados en la revisión previa fueron implementados en el fork `KmoM88/colcon-core` (rama `cottsay/pep621`, commit `816a0d3`). La totalidad de la suite de tests (19/19) corre exitosamente bajo el harness estándar de `colcon-core`. La rama se encuentra en estado óptimo para proponer merge o pull request upstream a Scott Logan.
 
 ---
 
@@ -128,33 +127,30 @@ sequenceDiagram
 ---
 
 ## 6. Plan de Testing y Estado de Verificación
-
-### Estado de Tests en la Rama
+ 
+### Estado de Tests en la Rama Fork (`KmoM88/colcon-core:cottsay/pep621`, Commit `816a0d3`)
 ```bash
 # Tests de identificación y aumento (Aprobados):
-pytest submodules/colcon-core/test/test_package_identification_pep621.py    # 2 PASSED
-pytest submodules/colcon-core/test/test_package_augmentation_pep621.py        # 4 PASSED
+pytest test/test_package_identification_pep621.py    # 2 PASSED
+pytest test/test_package_augmentation_pep621.py        # 4 PASSED
 
-# Tests de build task (Requieren corrección de runner):
-pytest submodules/colcon-core/test/test_task_python_project_build.py          # 3 FAILED (por @pytest.mark.asyncio)
-```
+# Tests de build task (Corregidos con run_until_complete):
+pytest test/test_task_python_project_build.py          # 3 PASSED
 
-### Corrección Requerida:
-```python
-# En submodules/colcon-core/test/test_task_python_project_build.py
-from .run_until_complete import run_until_complete
+# Tests complementarios de instalación/remoción de wheels:
+pytest test/test_install_wheel.py                     # 5 PASSED
+pytest test/test_remove_wheel.py                      # 4 PASSED
 
-def test_build_task(tmp_path):
-    ...
-    result = run_until_complete(task.build())
-    assert result is None
+# Total: 19 PASSED in 0.94s | flake8: 0 errors
 ```
 
 ---
 
 ## 7. Conclusiones y Próximos Pasos
 
-1. Crear rama de seguimiento en `submodules/kmom88-colcon-core` basada en `upstream/cottsay/pep621`.
-2. Aplicar el reemplazo de `@pytest.mark.asyncio` por `run_until_complete`.
-3. Validar la suite completa con el entorno virtual (`.venv`) y verificar con `flake8`.
-4. Presentar el fix a Scott Logan para finalizar y mergear la rama hacia `master`.
+1. [x] Crear rama de seguimiento en `submodules/kmom88-colcon-core` basada en `upstream/cottsay/pep621`.
+2. [x] Aplicar el reemplazo de `@pytest.mark.asyncio` por `run_until_complete`.
+3. [x] Validar la suite completa con el entorno virtual (`.venv`) y verificar con `flake8`.
+4. [x] Push de la rama validada al fork (`KmoM88/colcon-core:cottsay/pep621`, commit `816a0d3`).
+5. [ ] **Siguiente paso:** Validar integración end-to-end con paquetes reales (`flit_core`, `hatchling`) y preparar comunicación/PR hacia Scott Logan (`colcon/colcon-core`).
+

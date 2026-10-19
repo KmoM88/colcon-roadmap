@@ -4,35 +4,33 @@ This document defines the actionable, step-by-step roadmap for validating, final
 
 ---
 
-## Phase 1: Harmonize & Validate the `cottsay/pep621` Implementation
+## Phase 1: Harmonize & Validate the `cottsay/pep621` Implementation [COMPLETED]
 
 Scott Logan's branch `origin/cottsay/pep621` provides the core implementation of PEP 621 identification, dependency augmentation, and build task execution.
 
-### Action Items
-1. **Branch Tracking & Sync**:
-   * Create a dedicated tracking branch in `submodules/kmom88-colcon-core`:
+### Action Items & Completed Results
+1. **Branch Tracking & Sync**: [DONE]
+   * Tracking branch checked out in fork `submodules/kmom88-colcon-core`:
      ```bash
-     git -C submodules/kmom88-colcon-core checkout -b feature/pep621-standard-builds upstream/cottsay/pep621
+     git -C submodules/kmom88-colcon-core checkout -b cottsay/pep621 upstream/cottsay/pep621
      ```
-2. **Align Async Tests with colcon-core Conventions**:
-   * Replace `@pytest.mark.asyncio` in `test/test_task_python_project_build.py` with `from .run_until_complete import run_until_complete`.
-   * This removes the external dependency on `pytest-asyncio` and adheres to repository standards.
-3. **Run Unit Tests & Code Quality Suite**:
-   * Execute unit tests using the local virtual environment:
-     ```bash
-     PYTHONPATH=submodules/kmom88-colcon-core \
-     submodules/kmom88-colcon-core/.venv/bin/pytest \
-       submodules/kmom88-colcon-core/test/test_package_identification_pep621.py \
-       submodules/kmom88-colcon-core/test/test_package_augmentation_pep621.py \
-       submodules/kmom88-colcon-core/test/test_task_python_project_build.py \
-       submodules/kmom88-colcon-core/test/test_install_wheel.py \
-       submodules/kmom88-colcon-core/test/test_remove_wheel.py
-     ```
-   * Run repository linters (`flake8`, `pydocstyle`) configured in `setup.cfg`.
+2. **Align Async Tests with colcon-core Conventions**: [DONE]
+   * Replaced `@pytest.mark.asyncio` in `test/test_task_python_project_build.py` with `from .run_until_complete import run_until_complete`.
+   * Formatted imports according to `flake8` standards.
+   * Committed in `816a0d3` (*"fix: adapt async tests and clean up import formatting for PEP 621"*).
+   * Pushed to fork: [`KmoM88/colcon-core`](https://github.com/KmoM88/colcon-core) on branch `cottsay/pep621`.
+3. **Run Unit Tests & Code Quality Suite**: [DONE]
+   * All 19 related unit tests pass cleanly:
+     - `test_install_wheel.py` (5 passed)
+     - `test_remove_wheel.py` (4 passed)
+     - `test_package_identification_pep621.py` (2 passed)
+     - `test_package_augmentation_pep621.py` (4 passed)
+     - `test_task_python_project_build.py` (3 passed)
+   * `flake8` and repository style standards pass with 0 errors.
 
 ---
 
-## Phase 2: Integration Testing with Real Packages & Submodules
+## Phase 2: Integration Testing with Real Packages & Submodules [IN PROGRESS]
 
 To verify end-to-end functionality beyond unit tests, test the full build lifecycle using real Python packages.
 
