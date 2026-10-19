@@ -29,48 +29,49 @@ This roadmap outlines the plan to bring modern Python packaging standards (PEP 5
 
 ---
 
-## 3. Active & Next Features (Feature Branches Architecture)
+## 3. Implemented Features & PR Status (Feature Branches Architecture)
 
-The ongoing work is organized into dedicated feature branches across `colcon-core` and `colcon-ros`:
+The technical implementation is completed across dedicated feature branches in `colcon-core` and `colcon-ros`, with test suites passed and PR submission packages generated:
 
-| Feature Branch | Repository | Status | Focus |
+| Feature Branch | Repository | Status | Focus & Deliverable |
 | :--- | :--- | :--- | :--- |
-| `cottsay/pep621` (`816a0d3`) | `KmoM88/colcon-core` | **Validated in Fork** | PEP 621 identification, augmentation, build task & runner fix |
-| `feature/pep621-integration-tests` | `KmoM88/colcon-core` | **Active / Next** | Real multi-backend fixtures (`flit`, `hatchling`, `setuptools`) |
-| `feature/pep621-upstream-pr` | `KmoM88/colcon-core` | **Pending Phase 2** | Upstream PR to `colcon/colcon-core:master` / Scott Logan |
-| `feature/pep660-editable-data-files` | `KmoM88/colcon-core` | **Planned** | Editable installs & symlinked data files |
-| `feature/ros-ament-python-project` | `KmoM88/colcon-ros` | **Planned** | Modernization of `ament_python` to accept PEP 621 |
+| `cottsay/pep621` (`816a0d3`) | `KmoM88/colcon-core` | **Completed** | Fixed async test runner (`run_until_complete`), PEP 621 identification, augmentation & build task. |
+| `feature/pep621-integration-tests` (`c40901a`) | `KmoM88/colcon-core` | **Completed** | Real multi-backend fixtures (`flit_core`, `hatchling`), CLI scripts, clean rebuilds. |
+| `feature/pep621-upstream-pr` (`c40901a`) | `KmoM88/colcon-core` | **Ready for Submission** | Clean rebase on `upstream/master`, PR package prepared ([docs/pr/pr_description_pep621.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep621.md)). |
+| `feature/pep660-editable-data-files` (`de2050f`) | `KmoM88/colcon-core` | **Completed** | Symlink data files in `share/` during `--symlink-install` ([docs/pr/pr_description_pep660_data_files.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep660_data_files.md)). |
+| `feature/ros-ament-python-project` (`fc03806`) | `KmoM88/colcon-ros` | **Completed** | `ament_python` with PEP 621 / `pyproject.toml` ([docs/pr/pr_description_colcon_ros.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_colcon_ros.md)). |
 
-### Feature 1: PEP 621 Package Identification & Augmentation
-* **Status**: Implemented & Validated in fork (branch `cottsay/pep621`, commit `816a0d3`).
+### Feature 1: PEP 621 Package Identification & Augmentation [COMPLETED]
+* **Status**: Implemented & Validated in fork (commit `816a0d3`).
 * **Scope**:
   - `colcon_core/package_identification/pep621.py`: Detect directories containing `pyproject.toml` with `[project]` table and identify package name/type.
   - `colcon_core/package_augmentation/pep621.py`: Parse `project.dependencies` into build/run/test dependencies.
 * **Validation**: `test_package_identification_pep621.py` & `test_package_augmentation_pep621.py` passing cleanly (6/6 tests).
 
-### Feature 2: PEP 517/621 Build Task Integration
-* **Status**: Implemented & Validated in fork (branch `cottsay/pep621`, commit `816a0d3`).
+### Feature 2: PEP 517/621 Build Task Integration [COMPLETED]
+* **Status**: Implemented & Validated in fork (commit `816a0d3` and `c40901a`).
 * **Scope**:
-  - `colcon_core/task/python_project/build.py`: Implement task handler for PEP 517 projects.
-  - Invoke `build_wheel` using `AsyncHookCaller`.
-  - Call `install_wheel` to install the generated `.whl` into the target `install_base`.
-  - Ensure CLI flags (`--install-base`, `--symlink-install` fallbacks) are respected.
-* **Validation**: Fixed async test runner via `run_until_complete`. All build task tests pass cleanly (3/3 tests). Ready for integration tests with real packages.
-* **Feature Flag Guard (`COLCON_FEATURE_FLAGS`)**: Available as an optional transition safeguard via `is_feature_flag_set('pep621_builds')` to facilitate upstream merge without risk of breaking existing workspaces.
+  - `colcon_core/task/python_project/build.py`: Task handler for standard PEP 517 projects.
+  - Invokes `build_wheel` using `AsyncHookCaller`.
+  - Calls `install_wheel` to unpack into `install_base`.
+  - Generates environment scripts and hooks into `.dist-info/RECORD`.
+* **Validation**: Fixed async test runner via `run_until_complete`. End-to-end integration tests with real backends passing (100% test pass rate).
+* **Feature Flag Guard (`COLCON_FEATURE_FLAGS`)**: Gating available via `is_feature_flag_set('pep621_builds')` to facilitate upstream merge without risk of breaking existing workspaces.
 
-### Feature 3: PEP 660 Editable Installation (`--symlink-install`) & Data Files
-* **Status**: In progress / Planned (`feature/pep660-editable-data-files`).
+### Feature 3: PEP 660 Editable Installation (`--symlink-install`) & Data Files [COMPLETED]
+* **Status**: Implemented & Validated in fork (commit `de2050f`).
 * **Scope**:
-  - Invoke `build_editable` hook when `--symlink-install` is specified.
-  - Graceful fallback to standard wheel install if the backend does not support `build_editable`.
-  - Resolve the ROS data file linking gap: ensure non-Python assets (`launch/`, `urdf/`, `config/`) in `share/` remain symlinked or live-editable.
+  - Dispatches `build_editable` hook when `--symlink-install` is specified.
+  - Added `_get_data_files_mapping()`: discovers `setup.cfg` (`[options.data_files]`) and `pyproject.toml` (`[tool.setuptools.data-files]`, `[tool.hatch.build.targets.wheel.shared-data]`).
+  - Creates true filesystem symlinks for `share/` assets (launch files, parameter files) to keep them live-editable without rebuilds.
+* **Validation**: `test_integration_symlink_install_data_files` passing in `test/test_integration_pep621.py`.
 
-### Feature 4: ROS 2 `ament_python` with Standard Python Builds
-* **Status**: Implemented & Validated in fork (branch `feature/ros-ament-python-project`, commit `fc03806` in `colcon-ros`).
+### Feature 4: ROS 2 `ament_python` with Standard Python Builds [COMPLETED]
+* **Status**: Implemented & Validated in fork (`feature/ros-ament-python-project`, commit `fc03806` in `colcon-ros`).
 * **Scope**:
   - Detect `package.xml` (`<build_type>ament_python</build_type>`) packages using `pyproject.toml` without `setup.py`.
-  - Bridge `colcon-ros` with `PythonProjectBuildTask` while preserving ROS-specific index registration and environment hooks.
-* **Validation**: Verified end-to-end with `test_task_ament_python_build.py` (passes 100%, 0 flake8 errors). Ready for upstream collaboration.
+  - Bridge `colcon-ros` with `PythonProjectBuildTask` while preserving ROS-specific index registration (`share/ament_index/...`), `package.xml` placement, and `AMENT_PREFIX_PATH` hooks.
+* **Validation**: Verified end-to-end with `test_task_ament_python_build.py` (passes 100%, 0 flake8 errors). Ready for upstream submission.
 
 ---
 

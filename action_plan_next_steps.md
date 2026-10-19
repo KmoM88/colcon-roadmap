@@ -59,24 +59,23 @@ To structure the remaining work without risking regressions and ensuring clean u
 
 ---
 
-## Phase 3: Upstream Alignment & PR Submission [IN PROGRESS]
+## Phase 3: Upstream Alignment & PR Submission [COMPLETED / READY FOR SUBMISSION]
 
-* **Active Feature Branch**: `feature/pep621-upstream-pr` in `submodules/kmom88-colcon-core`.
+* **Feature Branch**: `feature/pep621-upstream-pr` in `submodules/kmom88-colcon-core` (rebased on `upstream/master` `6bfb100+`, pushed to `origin/feature/pep621-upstream-pr`).
+* **PR Artifacts Prepared**:
+  - PR Description & Changelog: [docs/pr/pr_description_pep621.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep621.md)
+  - Issue #736 Update Comment: [docs/pr/issue_736_comment.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/issue_736_comment.md)
+  - Direct Web Comparison URL: [colcon/colcon-core:master...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
-Once the implementation is validated with real backends:
-1. **Rebase & Polish**:
-   * Rebase branch onto latest `colcon/colcon-core:master` (`6bfb100+`).
-   * Preserve Scott Logan (`cottsay`) commit authorship for original PEP 621 groundwork (`80acf29`) and include co-authored/subsequent commits for the test runner fix (`816a0d3`) and integration suite.
-2. **Engage with Upstream on Issue #736**:
-   * Post a comprehensive technical update on upstream issue [#736](https://github.com/colcon/colcon-core/issues/736) reporting full test suite passes (19/19 + integration tests).
-   * Propose opening a PR targeting `colcon/colcon-core:master` (or alternatively providing a PR directly into Scott Logan's `cottsay/pep621` fork branch).
-3. **Feature Flag Rollout Strategy (`COLCON_FEATURE_FLAGS`)**:
-   * `colcon-core` provides a native feature flag mechanism via `colcon_core.feature_flags.is_feature_flag_set` (controlled by `COLCON_FEATURE_FLAGS`).
-   * **Proposal for Upstream Merge**: If maintainers express caution regarding potential workspace side-effects, offer to guard `PEP621PackageIdentification` behind a feature flag (e.g. `is_feature_flag_set('pep621_builds')` or `python_project`).
-   * When unset, legacy workspaces remain completely untouched; when set (or once promoted to `IMPLEMENTED_FLAGS` in a subsequent minor release), standard Python discovery activates.
-   * This gives maintainers a zero-risk path to merge the code into `colcon-core:master` without waiting for a breaking release.
-4. **Open Pull Request**:
-   * Submit the PR with detailed testing evidence, rationale for `run_until_complete` over `pytest-asyncio`, verification with multiple backends, and the feature flag option.
+### Accomplished Items:
+1. **Rebase & Polish**: [DONE]
+   * Cleanly rebased on `upstream/master` preserving Scott Logan (`cottsay`) commit authorship (`80acf29`) followed by the test runner fixes (`816a0d3`) and integration suite (`c40901a`).
+2. **Issue #736 Update Drafted**: [DONE]
+   * Technical response summarizing test results, `run_until_complete` alignment, and proposal for merging.
+3. **Feature Flag Rollout Strategy (`COLCON_FEATURE_FLAGS`)**: [DONE]
+   * Documented zero-risk merge strategy guarding `PEP621PackageIdentification` behind `is_feature_flag_set('pep621_builds')` if maintainers prefer gated activation.
+4. **Ready for Manual Web Submission**: [DONE]
+   * Ready for manual submission via GitHub web interface without CLI automation.
 
 ---
 

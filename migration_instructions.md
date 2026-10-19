@@ -6,32 +6,43 @@ This document tracks the migration of modern Python packaging capabilities (PEP 
 
 ## 1. Status of Migration Phases
 
-| Phase / Feature | Upstream Status | Description |
+| Phase / Feature | Status | Description |
 | :--- | :--- | :--- |
-| **Hook Invocations** | **Merged** (PR #732) | `AsyncHookCaller` for executing backend hooks in isolated subprocess. |
-| **Installed Distribution Discovery** | **Merged** (PR #728) | `InstalledDistribution` for discovering installed files on disk. |
-| **Wheel Uninstallation** (`remove_distributions`) | **Merged** (PR #741) | Metadata-driven removal of previous installations and directory pruning. |
-| **Wheel Installation Engine** (`install_wheel`) | **Merged** (PR #741) | Layout extraction, `.data/` directory mapping, script wrapping, and `RECORD` signing. |
-| **PEP 621 Identification & Augmentation** | **In Progress** (`cottsay/pep621`) | Parsing `pyproject.toml` `[project]` static table and dependencies. |
-| **Build Task Integration** (`PythonProjectBuildTask`) | **In Progress** (`cottsay/pep621`) | Hook caller execution + wheel install integration in build lifecycle. |
-| **PEP 660 Editable Installation** | **Pending** | `build_editable` invocation and editable data-file handling. |
+| **Hook Invocations** | **Merged Upstream** (PR #732) | `AsyncHookCaller` for executing backend hooks in isolated subprocess. |
+| **Installed Distribution Discovery** | **Merged Upstream** (PR #728) | `InstalledDistribution` for discovering installed files on disk. |
+| **Wheel Uninstallation** (`remove_distributions`) | **Merged Upstream** (PR #741) | Metadata-driven removal of previous installations and directory pruning. |
+| **Wheel Installation Engine** (`install_wheel`) | **Merged Upstream** (PR #741) | Layout extraction, `.data/` directory mapping, script wrapping, and `RECORD` signing. |
+| **PEP 621 Identification & Augmentation** | **Completed & Validated** | Parsing `pyproject.toml` `[project]` static table and dependencies (Priority 90). |
+| **Build Task Integration** (`PythonProjectBuildTask`) | **Completed & Validated** | Hook caller execution + `install_wheel` integration in build lifecycle. |
+| **Integration Test Suite** | **Completed & Validated** | End-to-end tests with real backends (`flit_core`, `hatchling`). 24/24 tests passing. |
+| **PEP 660 Editable & Data Files** | **Completed & Validated** | `build_editable` invocation + symlinking data files in `share/`. |
+| **ROS 2 `ament_python` PEP 621** | **Completed & Validated** | Native routing in `colcon-ros` for packages declaring only `pyproject.toml`. |
 
 ---
 
-## 2. Next Integration Action: Build Task & Identification
+## 2. Upstream Submission Packages
 
-The immediate next priority is validating and finalizing the PEP 621 & Build Task integration:
+All code changes are tested, formatted to flake8 standards, and ready for upstream contribution via GitHub Web:
 
-1. **Package Discovery & Identification**:
-   - `colcon_core/package_identification/pep621.py`: Detect packages with `pyproject.toml` and determine package name.
-   - `colcon_core/package_augmentation/pep621.py`: Parse dependencies from `project.dependencies` into colcon dependency model.
+1. **`colcon-core` PEP 621 PR**:
+   - Branch: `KmoM88/colcon-core:feature/pep621-upstream-pr`
+   - Description & Comment: [docs/pr/pr_description_pep621.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep621.md) & [docs/pr/issue_736_comment.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/issue_736_comment.md)
+   - Comparison: [colcon/colcon-core:master...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
-2. **Build Task Execution**:
-   - `colcon_core/task/python_project/build.py`:
-     1. Invoke `build_wheel` hook via `AsyncHookCaller`.
-     2. Call `install_wheel` to unpack into the install base.
-     3. Generate environment hooks and setup scripts.
+2. **`colcon-core` PEP 660 Data Files Symlink PR**:
+   - Branch: `KmoM88/colcon-core:feature/pep660-editable-data-files`
+   - Description: [docs/pr/pr_description_pep660_data_files.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep660_data_files.md)
+   - Comparison: [colcon/colcon-core:master...KmoM88:colcon-core:feature/pep660-editable-data-files](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep660-editable-data-files)
 
-3. **Validation & Testing**:
-   - Unit tests: `test/test_package_identification_pep621.py`, `test/test_package_augmentation_pep621.py`, `test/test_task_python_project_build.py`.
-   - Integration tests with real packages using `colcon build`.
+3. **`colcon-ros` PEP 621 `ament_python` PR**:
+   - Branch: `KmoM88/colcon-ros:feature/ros-ament-python-project`
+   - Description: [docs/pr/pr_description_colcon_ros.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_colcon_ros.md)
+   - Comparison: [colcon/colcon-ros:master...KmoM88:colcon-ros:feature/ros-ament-python-project](https://github.com/colcon/colcon-ros/compare/master...KmoM88:colcon-ros:feature/ros-ament-python-project)
+
+---
+
+## 3. Deprecation and Archival of `colcon-python-project`
+
+Upon upstream acceptance and merging of the PRs into `colcon-core` and `colcon-ros`:
+- Close PR #1 in [colcon/colcon-python-project](https://github.com/colcon/colcon-python-project/pull/1) pointing to native support in core.
+- Archive the prototype repository with a deprecation notice.
