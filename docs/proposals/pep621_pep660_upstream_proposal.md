@@ -94,9 +94,10 @@ The core packaging primitives have already been reviewed and merged into `colcon
 
 ## 4. Stage 2: PEP 660 & Editable Non-Python Data Files
 
-* **Status**: **Completed & Tested**
+* **Status**: **Draft PR Opened**
+* **Pull Request**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751)
 * **Repository**: `colcon-core`
-* **Branch**: [`KmoM88/colcon-core:feature/pep660-editable-data-files`](https://github.com/KmoM88/colcon-core/tree/feature/pep660-editable-data-files) (Commit `de2050f`)
+* **Branch**: [`KmoM88/colcon-core:feature/pep660-editable-data-files`](https://github.com/KmoM88/colcon-core/tree/feature/pep660-editable-data-files) (Commit `d989ee4`)
 
 ### The Problem
 Standard Python packaging backends (Flit, Hatchling, Setuptools) only expose Python module files (`.py`) as editable when using PEP 660. Non-Python data assets (such as ROS 2 launch files, URDFs, YAML configuration, and rviz configs located in `share/<package>/`) are normally packaged into `.data/data/share/` and copied statically at build time. Under `--symlink-install`, editing a launch file would require a manual rebuild.
@@ -111,7 +112,8 @@ Standard Python packaging backends (Flit, Hatchling, Setuptools) only expose Pyt
 
 ## 5. Stage 3: ROS 2 `ament_python` Modernization
 
-* **Status**: **Completed & Tested**
+* **Status**: **Draft PR Opened**
+* **Pull Request**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)
 * **Repository**: `colcon-ros`
 * **Branch**: [`KmoM88/colcon-ros:feature/ros-ament-python-project`](https://github.com/KmoM88/colcon-ros/tree/feature/ros-ament-python-project) (Commit `fc03806`)
 
@@ -164,8 +166,8 @@ To keep upstream review friction minimal, we propose the following sequential wo
 | Stage | Repository | Feature Branch | Base Branch | Status / PR |
 | :--- | :--- | :--- | :--- | :--- |
 | **Stage 1** | `colcon-core` | `feature/pep621-upstream-pr` (`4a594c8`) | `cottsay/pep621` | **[colcon-core#750](https://github.com/colcon/colcon-core/pull/750)** (Under Review) |
-| **Stage 2** | `colcon-core` | `feature/pep660-editable-data-files` (`de2050f`) | `master` | **Ready for PR** |
-| **Stage 3** | `colcon-ros` | `feature/ros-ament-python-project` (`fc03806`) | `master` | **Ready for PR** |
+| **Stage 2** | `colcon-core` | `feature/pep660-editable-data-files` (`d989ee4`) | `master` | **[colcon-core#751](https://github.com/colcon/colcon-core/pull/751)** (Draft PR) |
+| **Stage 3** | `colcon-ros` | `feature/ros-ament-python-project` (`fc03806`) | `master` | **[colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)** (Draft PR) |
 | **Stage 4** | `colcon-python-project` | Deprecation Documentation | `master` | **Planned** |
 
 ---

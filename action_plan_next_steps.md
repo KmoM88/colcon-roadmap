@@ -81,9 +81,10 @@ To structure the remaining work without risking regressions and ensuring clean u
 
 ---
 
-## Phase 4: PEP 660 Editable Installations & Non-Python Data Files [COMPLETED]
+## Phase 4: PEP 660 Editable Installations & Non-Python Data Files [DRAFT PR #751 OPENED]
 
-* **Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core` (Commit `de2050f`).
+* **Pull Request**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (Draft)
+* **Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core` (Commit `d989ee4`).
 * **Implementation**:
   - `_get_data_files_mapping(pkg)` in `colcon_core/task/python_project/build.py` extracts non-Python data files defined in `setup.cfg` (`[options.data_files]`) or `pyproject.toml` (`[tool.setuptools.data-files]` and `[tool.hatch.build.targets.wheel.shared-data]`).
   - When `--symlink-install` is active, invokes `colcon_core.task.install()` to create real symbolic links from source to `install_base` (e.g. `share/<package>/launch`), and registers each installed target into `.dist-info/RECORD`.
@@ -91,12 +92,13 @@ To structure the remaining work without risking regressions and ensuring clean u
 * **Testing & Verification**:
   - Added `test_integration_symlink_install_data_files` to `test/test_integration_pep621.py`.
   - Validates live editing of source launch files and verification of symlinks on disk.
-  - All 24 unit & integration tests passing in 0.70s, `flake8` clean (0 errors), pushed to `KmoM88/colcon-core`.
+  - Rebased on PR #750, all unit & integration tests passing, `flake8` and `scspell3k` clean (added `yaml` to known words).
 
 ---
 
-## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros` [COMPLETED]
+## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros` [DRAFT PR #171 OPENED]
 
+* **Pull Request**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (Draft)
 * **Feature Branch**: `feature/ros-ament-python-project` in `submodules/colcon-ros` (`KmoM88/colcon-ros`, Commit `fc03806`).
 * **Implementation**:
   - `AmentPythonBuildTask` in `colcon_ros/task/ament_python/build.py` automatically detects packages specifying `<build_type>ament_python</build_type>` with `pyproject.toml` (and no `setup.py`).

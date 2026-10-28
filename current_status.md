@@ -114,8 +114,8 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 | **PEP 621 Augmentation** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Maps `[project.dependencies]` |
 | **Python Project Build Task** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Calls `install_wheel` & writes hooks, async tests fixed |
 | **PEP 660 Editable Hooks** | **Verified** | Fork commit `c40901a` / `colcon-core` | Dispatches `build_editable` + PEP 610 JSON |
-| **ROS Data Files in Editable**| **Verified** | Fork commit `de2050f` / `colcon-core` | Symlinking of `share/` assets via `colcon_core.task.install()` |
-| **ROS `ament_python` PEP 621**| **Verified** | Fork commit `fc03806` / `colcon-ros` | Native support in `AmentPythonBuildTask` |
+| **ROS Data Files in Editable**| **Draft PR #751**| [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) | Symlinking of `share/` assets via `colcon_core.task.install()` |
+| **ROS `ament_python` PEP 621**| **Draft PR #171**| [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) | Native support in `AmentPythonBuildTask` |
 
 ---
 
@@ -123,15 +123,14 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 
 To close the development of standard Python builds across the ecosystem, work is structured across sequential feature branches:
 
-1. **`feature/pep621-integration-tests` (`colcon-core`) [COMPLETED]**:
-   - Automated end-to-end integration tests using real backends (`flit_core`, `hatchling`).
-   - Validate CLI wrapper execution and clean removal on rebuilds. (Commit `c40901a`).
-2. **`feature/pep621-upstream-pr` (`colcon-core`) [SUBMITTED as PR #750]**:
+1. **`feature/pep621-upstream-pr` (`colcon-core`) [SUBMITTED as PR #750]**:
    - Submitted as [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) targeting `cottsay/pep621`.
-   - All tests, flake8, and spell-check verified and passing (Commit `4a594c8`).
+   - Flake8 and spell-check verified and passing (Commit `4a594c8`).
    - Awaiting review/merge into `cottsay/pep621` or `master`.
-3. **`feature/pep660-editable-data-files` (`colcon-core`) [COMPLETED]**:
-   - Implemented data files symlinking in `--symlink-install` via `_get_data_files_mapping()`. (Commit `de2050f`).
-4. **`feature/ros-ament-python-project` (`colcon-ros`) [COMPLETED]**:
-   - Adapted `AmentPythonBuildTask` in `colcon-ros` to build modern `ament_python` packages declaring only `pyproject.toml`. (Commit `fc03806`).
+2. **`feature/pep660-editable-data-files` (`colcon-core`) [DRAFT PR #751 OPENED]**:
+   - Submitted as [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751).
+   - Rebased on top of PR #750, all 5 integration tests passing, flake8 and spell-check clean (Commit `d989ee4`).
+3. **`feature/ros-ament-python-project` (`colcon-ros`) [DRAFT PR #171 OPENED]**:
+   - Submitted as [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171).
+   - Adapted `AmentPythonBuildTask` in `colcon-ros` to build modern `ament_python` packages declaring only `pyproject.toml` (Commit `fc03806`).
 

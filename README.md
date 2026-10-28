@@ -13,8 +13,8 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 * **Phase 1: Harmonize `cottsay/pep621`** $\rightarrow$ **COMPLETED** (Commit `816a0d3`).
 * **Phase 2: Multi-Backend Integration Testing** $\rightarrow$ **COMPLETED** (Commit `c40901a`, `flit_core` and `hatchling` test fixtures).
 * **Phase 3: Upstream PR for `colcon-core`** $\rightarrow$ **SUBMITTED ([colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750))** (Targeting `cottsay/pep621`).
-* **Phase 4: PEP 660 Editable Data Files Symlinking** $\rightarrow$ **COMPLETED** (Commit `de2050f`).
-* **Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros`** $\rightarrow$ **COMPLETED** (Commit `fc03806`).
+* **Phase 4: PEP 660 Editable Data Files Symlinking** $\rightarrow$ **DRAFT PR OPENED ([colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751))** (Commit `d989ee4`).
+* **Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros`** $\rightarrow$ **DRAFT PR OPENED ([colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171))** (Commit `fc03806`).
 * **Phase 6: Prototype Deprecation (`colcon-python-project`)** $\rightarrow$ **PENDING UPSTREAM MERGE**.
 
 ---
@@ -26,6 +26,7 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 | **[Current Status](current_status.md)** | Technical analysis of merged PRs (#728, #732, #741), branch states, and test results. |
 | **[Action Plan & Next Steps](action_plan_next_steps.md)** | Phased engineering roadmap, feature branch structure, and verification results. |
 | **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, and backend compatibility matrix. |
+| **[Upstream Proposal (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Staged architectural proposal submitted upstream ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
 | **[Migration Instructions](migration_instructions.md)** | Transition strategy from `colcon-python-project` to native `colcon-core`. |
 
 ---
@@ -41,11 +42,13 @@ All PR materials (titles, descriptions, test logs, and comparison links) are for
 * **Compare URL**: [colcon/colcon-core:cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
 ### 2. `colcon-core` PEP 660 Data Files Symlinking (Fase 4)
+* **PR**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (Draft)
 * **Target**: `colcon/colcon-core:master` $\leftarrow$ `KmoM88:feature/pep660-editable-data-files`
 * **Artifact**: [docs/pr/pr_description_pep660_data_files.md](docs/pr/pr_description_pep660_data_files.md)
 * **Compare URL**: [colcon/colcon-core:master...KmoM88:colcon-core:feature/pep660-editable-data-files](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep660-editable-data-files)
 
 ### 3. `colcon-ros` PEP 621 `ament_python` Support (Fase 5)
+* **PR**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (Draft)
 * **Target**: `colcon/colcon-ros:master` $\leftarrow$ `KmoM88:feature/ros-ament-python-project`
 * **Artifact**: [docs/pr/pr_description_colcon_ros.md](docs/pr/pr_description_colcon_ros.md)
 * **Compare URL**: [colcon/colcon-ros:master...KmoM88:colcon-ros:feature/ros-ament-python-project](https://github.com/colcon/colcon-ros/compare/master...KmoM88:colcon-ros:feature/ros-ament-python-project)
