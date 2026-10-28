@@ -90,6 +90,31 @@ The core packaging primitives have already been reviewed and merged into `colcon
 6. **Code Quality**:
    - 100% clean under `flake8` and `scspell3k`.
 
+### Feature Flag Rollout Strategy (`COLCON_FEATURE_FLAGS`)
+To facilitate upstream merging with zero risk to existing production workspaces, native PEP 621 building can optionally be gated behind `colcon-core`'s established feature flag mechanism (`colcon_core.feature_flags`):
+
+* **Activation via Environment Variable**:
+  ```bash
+  export COLCON_FEATURE_FLAGS=pep621_builds
+  colcon build
+  ```
+  *(Multiple flags can be combined using the system path separator, e.g. `COLCON_FEATURE_FLAGS=foo:pep621_builds` on Linux/macOS).*
+* **Zero-Regression Extension Guard**:
+  In `colcon_core/package_identification/pep621.py`:
+  ```python
+  from colcon_core.feature_flags import is_feature_flag_set
+
+  class PEP621PackageIdentification(PackageIdentificationExtensionPoint):
+      PRIORITY = 90  # Lower priority than legacy setup.py (100)
+
+      def identify(self, desc):
+          if not is_feature_flag_set('pep621_builds'):
+              return
+          # ... proceed with pyproject.toml [project] parsing ...
+  ```
+* **Graduation Path**:
+  Once the maintainers and community validate the implementation across active distributions, `pep621_builds` can simply be registered in `IMPLEMENTED_FLAGS` in `colcon_core/feature_flags.py`. This promotes native PEP 621 discovery to default behavior while gracefully warning users that the flag is no longer required.
+
 ---
 
 ## 4. Stage 2: PEP 660 & Editable Non-Python Data Files
