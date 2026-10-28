@@ -37,6 +37,7 @@ I have completed, harmonized, and verified the end-to-end PEP 621 pipeline:
 
 I have opened PR #750 ([colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750)) targeting your branch `cottsay/pep621` so you can review and merge it into your branch directly.
 
-Once reviewed, we also have prepared follow-up stages (PEP 660 data files symlinking and ROS 2 `ament_python` support) ready as sequential proposals.
+To outline the broader roadmap, I compiled a staged proposal covering the follow-up steps (PEP 660 data files symlinking and ROS 2 `ament_python` support) in this gist:
+👉 https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed
 
 Thanks!

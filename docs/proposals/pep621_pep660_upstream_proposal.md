@@ -170,4 +170,5 @@ To keep upstream review friction minimal, we propose the following sequential wo
 
 ---
 
+* **Published Gist**: [https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)  
 *Prepared by Federico Rossi ([@KmoM88](https://github.com/KmoM88))*
