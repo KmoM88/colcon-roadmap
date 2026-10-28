@@ -41,6 +41,9 @@ The technical implementation is completed across dedicated feature branches in `
 | `feature/pep660-editable-data-files` (`d989ee4`) | `KmoM88/colcon-core` | **PR #751 (Draft)** | Draft PR [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (Symlink data files in `share/` during `--symlink-install`). |
 | `feature/ros-ament-python-project` (`fc03806`) | `KmoM88/colcon-ros` | **PR #171 (Draft)** | Draft PR [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (`ament_python` with PEP 621 / `pyproject.toml`). |
 
+> [!IMPORTANT]
+> A comprehensive technical audit and remediation strategy for 9 architectural pitfalls (including `ros2 run` binary locations, `colcon test` support, and data files symmetry) is documented in **[docs/plans/pitfalls_and_remediation_plan.md](docs/plans/pitfalls_and_remediation_plan.md)**.
+
 ### Feature 1: PEP 621 Package Identification & Augmentation [COMPLETED]
 * **Status**: Implemented & Validated in fork (commit `816a0d3`).
 * **Scope**:

@@ -26,6 +26,7 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 | **[Current Status](current_status.md)** | Technical analysis of merged PRs (#728, #732, #741), branch states, and test results. |
 | **[Action Plan & Next Steps](action_plan_next_steps.md)** | Phased engineering roadmap, feature branch structure, and verification results. |
 | **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, and backend compatibility matrix. |
+| **[Pitfalls & Remediation Plan](docs/plans/pitfalls_and_remediation_plan.md)** | Audit of 9 architectural pitfalls (ros2 run, colcon test, data files parity) and PR staging strategy. |
 | **[Upstream Proposal (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Staged architectural proposal submitted upstream ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
 | **[Migration Instructions](migration_instructions.md)** | Transition strategy from `colcon-python-project` to native `colcon-core`. |
 
