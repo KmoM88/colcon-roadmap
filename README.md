@@ -12,7 +12,7 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 
 * **Phase 1: Harmonize `cottsay/pep621`** $\rightarrow$ **COMPLETED** (Commit `816a0d3`).
 * **Phase 2: Multi-Backend Integration Testing** $\rightarrow$ **COMPLETED** (Commit `c40901a`, `flit_core` and `hatchling` test fixtures).
-* **Phase 3: Upstream PR Preparation for `colcon-core`** $\rightarrow$ **READY FOR SUBMISSION** (Rebased on `master`).
+* **Phase 3: Upstream PR for `colcon-core`** $\rightarrow$ **SUBMITTED ([colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750))** (Targeting `cottsay/pep621`).
 * **Phase 4: PEP 660 Editable Data Files Symlinking** $\rightarrow$ **COMPLETED** (Commit `de2050f`).
 * **Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros`** $\rightarrow$ **COMPLETED** (Commit `fc03806`).
 * **Phase 6: Prototype Deprecation (`colcon-python-project`)** $\rightarrow$ **PENDING UPSTREAM MERGE**.
@@ -32,12 +32,13 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 
 ## 📦 Pull Request Submissions & Materials
 
-All PR materials (titles, descriptions, test logs, and comparison links) are formatted and ready for manual web submission:
+All PR materials (titles, descriptions, test logs, and comparison links) are formatted and documented:
 
 ### 1. `colcon-core` Core PEP 621 Support (Fases 1, 2 y 3)
-* **Target**: `colcon/colcon-core:master` $\leftarrow$ `KmoM88:feature/pep621-upstream-pr`
+* **PR**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750)
+* **Target**: `colcon/colcon-core:cottsay/pep621` $\leftarrow$ `KmoM88:feature/pep621-upstream-pr`
 * **Artifacts**: [docs/pr/pr_description_pep621.md](docs/pr/pr_description_pep621.md) & [docs/pr/issue_736_comment.md](docs/pr/issue_736_comment.md)
-* **Compare URL**: [colcon/colcon-core:master...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep621-upstream-pr)
+* **Compare URL**: [colcon/colcon-core:cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
 ### 2. `colcon-core` PEP 660 Data Files Symlinking (Fase 4)
 * **Target**: `colcon/colcon-core:master` $\leftarrow$ `KmoM88:feature/pep660-editable-data-files`

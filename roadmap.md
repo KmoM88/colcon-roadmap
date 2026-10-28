@@ -37,7 +37,7 @@ The technical implementation is completed across dedicated feature branches in `
 | :--- | :--- | :--- | :--- |
 | `cottsay/pep621` (`816a0d3`) | `KmoM88/colcon-core` | **Completed** | Fixed async test runner (`run_until_complete`), PEP 621 identification, augmentation & build task. |
 | `feature/pep621-integration-tests` (`c40901a`) | `KmoM88/colcon-core` | **Completed** | Real multi-backend fixtures (`flit_core`, `hatchling`), CLI scripts, clean rebuilds. |
-| `feature/pep621-upstream-pr` (`c40901a`) | `KmoM88/colcon-core` | **Ready for Submission** | Clean rebase on `upstream/master`, PR package prepared ([docs/pr/pr_description_pep621.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep621.md)). |
+| `feature/pep621-upstream-pr` (`4a594c8`) | `KmoM88/colcon-core` | **PR #750 Submitted** | PR [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) targeting `cottsay/pep621`. |
 | `feature/pep660-editable-data-files` (`de2050f`) | `KmoM88/colcon-core` | **Completed** | Symlink data files in `share/` during `--symlink-install` ([docs/pr/pr_description_pep660_data_files.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep660_data_files.md)). |
 | `feature/ros-ament-python-project` (`fc03806`) | `KmoM88/colcon-ros` | **Completed** | `ament_python` with PEP 621 / `pyproject.toml` ([docs/pr/pr_description_colcon_ros.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_colcon_ros.md)). |
 

@@ -1,8 +1,9 @@
 # Pull Request: Native Support for PEP 621 Standard Python Projects
 
-**Target Base**: `colcon/colcon-core:master`  
+**PR**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750)  
+**Target Base**: `colcon/colcon-core:cottsay/pep621`  
 **Head Branch**: `KmoM88/colcon-core:feature/pep621-upstream-pr`  
-**Direct Comparison URL**: [Compare on GitHub](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep621-upstream-pr)
+**Direct Comparison URL**: [Compare on GitHub](https://github.com/colcon/colcon-core/compare/cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
 ---
 

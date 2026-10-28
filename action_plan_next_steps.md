@@ -59,23 +59,25 @@ To structure the remaining work without risking regressions and ensuring clean u
 
 ---
 
-## Phase 3: Upstream Alignment & PR Submission [COMPLETED / READY FOR SUBMISSION]
+## Phase 3: Upstream Alignment & PR Submission [SUBMITTED AS PR #750]
 
-* **Feature Branch**: `feature/pep621-upstream-pr` in `submodules/kmom88-colcon-core` (rebased on `upstream/master` `6bfb100+`, pushed to `origin/feature/pep621-upstream-pr`).
-* **PR Artifacts Prepared**:
+* **PR**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750)
+* **Target Branch**: `colcon/colcon-core:cottsay/pep621`
+* **Head Branch**: `KmoM88/colcon-core:feature/pep621-upstream-pr` (Commit `4a594c8`).
+* **PR Artifacts**:
   - PR Description & Changelog: [docs/pr/pr_description_pep621.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep621.md)
   - Issue #736 Update Comment: [docs/pr/issue_736_comment.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/issue_736_comment.md)
-  - Direct Web Comparison URL: [colcon/colcon-core:master...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep621-upstream-pr)
+  - Comparison URL: [colcon/colcon-core:cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
 ### Accomplished Items:
 1. **Rebase & Polish**: [DONE]
-   * Cleanly rebased on `upstream/master` preserving Scott Logan (`cottsay`) commit authorship (`80acf29`) followed by the test runner fixes (`816a0d3`) and integration suite (`c40901a`).
-2. **Issue #736 Update Drafted**: [DONE]
-   * Technical response summarizing test results, `run_until_complete` alignment, and proposal for merging.
-3. **Feature Flag Rollout Strategy (`COLCON_FEATURE_FLAGS`)**: [DONE]
-   * Documented zero-risk merge strategy guarding `PEP621PackageIdentification` behind `is_feature_flag_set('pep621_builds')` if maintainers prefer gated activation.
-4. **Ready for Manual Web Submission**: [DONE]
-   * Ready for manual submission via GitHub web interface without CLI automation.
+   * Preserved Scott Logan (`cottsay`) commit authorship (`80acf29`) followed by the test runner fixes (`816a0d3`), integration suite (`c40901a`), and flake8/spell-check fixes (`4a594c8`).
+2. **PR #750 Submitted**: [DONE]
+   * Submitted to `cottsay/pep621` to facilitate seamless review and integration into the upstream branch.
+3. **CI Linters & Verification**: [DONE]
+   * Flake8 and `scspell3k` passing with 0 errors, 44/46 GitHub Actions checks passed (the remaining 2 were runner capacity cancellations on macOS).
+4. **Issue #736 Update Prepared**: [DONE]
+   * Technical response summarizing test results, `run_until_complete` alignment, and link to PR #750.
 
 ---
 

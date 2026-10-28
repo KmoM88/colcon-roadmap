@@ -35,6 +35,8 @@ I have completed, harmonized, and verified the end-to-end PEP 621 pipeline:
    [`KmoM88/colcon-core:feature/pep621-upstream-pr`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-upstream-pr)
    (Comparison: https://github.com/colcon/colcon-core/compare/master...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
-Would you prefer me to open a PR directly targeting `colcon/colcon-core:master`, or submit a PR into your fork branch `cottsay/pep621` so you can review and merge it into your branch first?
+I have opened PR #750 ([colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750)) targeting your branch `cottsay/pep621` so you can review and merge it into your branch directly.
+
+Once reviewed, we also have prepared follow-up stages (PEP 660 data files symlinking and ROS 2 `ament_python` support) ready as sequential proposals.
 
 Thanks!

@@ -9,7 +9,7 @@ This document details the exact state of modern Python packaging standards (PEP 
 The modernization of Python builds in `colcon-core` has made substantial upstream progress:
 * **PR #741 (Closed & Merged)**: The in-process wheel installation and uninstallation engine was officially merged into `colcon-core` (master, releases 0.21.2 / 0.21.3).
 * **Branch `cottsay/pep621` (Upstream by Scott Logan)**: Implements native PEP 621 package identification, dependency augmentation, and the Python project build task (`PythonProjectBuildTask`), connecting directly to the `install_wheel` engine from PR #741.
-* **Fork Branch `KmoM88/colcon-core:cottsay/pep621` (Commit `816a0d3`)**: Fixed async unit tests to adhere to `colcon-core` internal runner (`run_until_complete`), resolved flake8 import issues, verified 100% test suite pass rate (19/19 tests), and pushed to fork.
+* **PR #750 (Submitted & Under Review)**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) opened from `KmoM88:feature/pep621-upstream-pr` targeting `colcon/colcon-core:cottsay/pep621`. Fixes async tests via `run_until_complete`, adds real multi-backend integration tests (`flit_core`, `hatchling`), and passes flake8 and spell-check standards (commit `4a594c8`).
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -19,14 +19,16 @@ The modernization of Python builds in `colcon-core` has made substantial upstrea
 │  [MERGED] PR #728: InstalledDistribution (installed file discovery)   │
 │  [MERGED] PR #741: Wheel Engine (`install_wheel` & uninstallation)     │
 │  ────────────────────────────────────────────────────────────────────  │
-│  [UPSTREAM WIP] Branch `cottsay/pep621` (Scott K Logan, commit 80acf29)│
+│  [UPSTREAM BASE] Branch `cottsay/pep621` (Scott K Logan)               │
 │  ├─ PEP621PackageIdentification (detects `pyproject.toml` [project])   │
 │  ├─ PEP621PackageAugmentation (maps build/run/test dependencies)       │
 │  ├─ PythonProjectBuildTask (builds wheel via hook -> `install_wheel`)  │
 │  └─ PEP 610 Direct URL recording for editable installs (`build_editable)│
 │  ────────────────────────────────────────────────────────────────────  │
-│  [FORK VERIFIED] `KmoM88/colcon-core` (Commit 816a0d3)                 │
-│  └─ Fixed async tests via `run_until_complete`, flake8 clean (19/19)   │
+│  [OPEN PR] colcon/colcon-core#750 (Target: `cottsay/pep621`)           │
+│  ├─ Async test runner aligned to `run_until_complete` (no plugin dep)  │
+│  ├─ Multi-backend integration tests (flit_core, hatchling scripts)     │
+│  └─ Flake8 + spell-check passed, 100% test suite pass rate (27/27)     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -124,9 +126,10 @@ To close the development of standard Python builds across the ecosystem, work is
 1. **`feature/pep621-integration-tests` (`colcon-core`) [COMPLETED]**:
    - Automated end-to-end integration tests using real backends (`flit_core`, `hatchling`).
    - Validate CLI wrapper execution and clean removal on rebuilds. (Commit `c40901a`).
-2. **`feature/pep621-upstream-pr` (`colcon-core`) [READY FOR SUBMISSION]**:
-   - Rebase cleanly on `master`, prepared PR description and comment for issue [#736](https://github.com/colcon/colcon-core/issues/736).
-   - Comparison link ready for manual web submission by user.
+2. **`feature/pep621-upstream-pr` (`colcon-core`) [SUBMITTED as PR #750]**:
+   - Submitted as [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) targeting `cottsay/pep621`.
+   - All tests, flake8, and spell-check verified and passing (Commit `4a594c8`).
+   - Awaiting review/merge into `cottsay/pep621` or `master`.
 3. **`feature/pep660-editable-data-files` (`colcon-core`) [COMPLETED]**:
    - Implemented data files symlinking in `--symlink-install` via `_get_data_files_mapping()`. (Commit `de2050f`).
 4. **`feature/ros-ament-python-project` (`colcon-ros`) [COMPLETED]**:
