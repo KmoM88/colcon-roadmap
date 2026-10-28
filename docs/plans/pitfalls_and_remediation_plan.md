@@ -188,7 +188,7 @@ flowchart TD
    * Document in the user guides that for ROS 2 `ament_python` packages:
      * `package.xml` is the authoritative manifest for `rosdep` and workspace topological sorting.
      * `pyproject.toml` is the authoritative manifest for the Python build backend and runtime wheel metadata.
-     * Backends (e.g. `python3-flit-core`, `python3-hatchling`) must be listed as `<build_depend>` in `package.xml` to ensure `rosdep install` resolves them in CI.
+     * Backends (e.g. `python3-flit-core`, `python3-hatchling`, or `python3-setuptools` plus `python3-wheel` on distributions with `setuptools < 70.1` such as Ubuntu 22.04/24.04) must be listed as `<build_depend>` in `package.xml` to ensure `rosdep install` resolves them in CI.
 2. **Mock Package Suite Updates**:
    * Update `examples/mock_packages/04_ros2_ament_pyproject` test assertion to verify binary execution from `lib/ros_pyproject_pkg/sample-node` (matching `ros2 run` behavior).
    * Update `examples/mock_packages/03_modern_editable_data_files` to demonstrate clean shared-data packaging with `hatchling`.
@@ -200,9 +200,9 @@ flowchart TD
 | Task ID | Action Item | Target Repo & Branch | Staging Type | Prerequisite |
 | :--- | :--- | :--- | :--- | :--- |
 | **TASK-1** | Post upstream comment on PR #750 proposing `PRIORITY = 80` | `colcon/colcon-core#750` | Review Comment | PR #750 open |
-| **TASK-2** | Support `script_dir_override` in `PythonProjectBuildTask.build()` | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) | TASK-1 |
+| **TASK-2** | Support `script_dir_override` in `PythonProjectBuildTask.build()` | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) — **DONE (`463df5f`, 46/46 CI)** | TASK-1 |
 | **TASK-3** | Update `colcon-ros` PR #171: `script_dir_override = lib/<pkg>`, fix `additional_hooks`, wire metadata | `colcon-ros:feature/ros-ament-python-project` | In-place (PR #171) | TASK-2 |
-| **TASK-4** | Refactor editable data files & remove duplicate `RECORD` lines | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) | TASK-2 |
+| **TASK-4** | Refactor editable data files & remove duplicate `RECORD` lines | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) — **DONE (`463df5f`, 46/46 CI)** | TASK-2 |
 | **TASK-5** | Update mock packages (03 and 04) and `scripts/test_mock_packages.py` | `colcon-roadmap:main` | Base Repo | TASK-3, TASK-4 |
 | **TASK-6** | Implement `PythonProjectTestTask` for `colcon test` | `colcon-core:feature/python-project-test` | New PR | PR #750 merged |
 | **TASK-7** | Port `SetuptoolsDecorator` scratch directory isolation | `colcon-core:feature/setuptools-decorator` | New PR | PR #750 merged |

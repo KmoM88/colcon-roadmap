@@ -65,8 +65,9 @@ To structure the remaining work without risking regressions and ensuring clean u
 * **Target Branch**: `colcon/colcon-core:cottsay/pep621`
 * **Head Branch**: `KmoM88/colcon-core:feature/pep621-upstream-pr` (Commit `4a594c8`).
 * **PR Artifacts**:
-  - PR Description & Changelog: [docs/pr/pr_description_pep621.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/pr_description_pep621.md)
-  - Issue #736 Update Comment: [docs/pr/issue_736_comment.md](file:///home/fede/github/kmom88/colcon-roadmap/docs/pr/issue_736_comment.md)
+  - PR Description & Changelog: [docs/pr/pr_description_pep621.md](docs/pr/pr_description_pep621.md)
+  - Issue #736 Update Comment: [docs/pr/issue_736_comment.md](docs/pr/issue_736_comment.md)
+  - Priority Tie Follow-up Comment: [docs/pr/pr_750_priority_comment.md](docs/pr/pr_750_priority_comment.md)
   - Comparison URL: [colcon/colcon-core:cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr](https://github.com/colcon/colcon-core/compare/cottsay/pep621...KmoM88:colcon-core:feature/pep621-upstream-pr)
 
 ### Accomplished Items:
@@ -81,18 +82,17 @@ To structure the remaining work without risking regressions and ensuring clean u
 
 ---
 
-## Phase 4: PEP 660 Editable Installations & Non-Python Data Files [DRAFT PR #751 OPENED]
+## Phase 4: PEP 660 Editable Installations, Data Files & Script Override [DRAFT PR #751 — 46/46 CI GREEN]
 
 * **Pull Request**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (Draft)
-* **Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core` (Commit `d989ee4`).
+* **Feature Branch**: `feature/pep660-editable-data-files` in `submodules/kmom88-colcon-core` (Commit `463df5f`).
 * **Implementation**:
-  - `_get_data_files_mapping(pkg)` in `colcon_core/task/python_project/build.py` extracts non-Python data files defined in `setup.cfg` (`[options.data_files]`) or `pyproject.toml` (`[tool.setuptools.data-files]` and `[tool.hatch.build.targets.wheel.shared-data]`).
-  - When `--symlink-install` is active, invokes `colcon_core.task.install()` to create real symbolic links from source to `install_base` (e.g. `share/<package>/launch`), and registers each installed target into `.dist-info/RECORD`.
-  - Enables true editable workflows for ROS 2 launch files, parameter files, and configuration assets without rebuilding.
+  - Extended `PythonProjectBuildTask.build(*, additional_hooks=None, script_dir_override=None)` and fixed relative `install_base` `$base` resolution so downstream tasks (`colcon-ros`) can route scripts to `lib/<package>` without requiring `setup.cfg`.
+  - Scoped `_get_data_files_mapping(pkg, backend_name)` strictly to the active PEP 517 backend (`setuptools.build_meta*` with glob expansion for `setup.cfg` and `[tool.setuptools.data-files]`, `hatchling.*` for file and directory `[tool.hatch.build.targets.wheel.shared-data]`) for 100% standard/editable parity.
+  - Replaced static `.data/` entries in `.dist-info/RECORD` in place when converted to symbolic links (no duplicate `RECORD` entries).
 * **Testing & Verification**:
-  - Added `test_integration_symlink_install_data_files` to `test/test_integration_pep621.py`.
-  - Validates live editing of source launch files and verification of symlinks on disk.
-  - Rebased on PR #750, all unit & integration tests passing, `flake8` and `scspell3k` clean (added `yaml` to known words).
+  - Added unit tests (`test_get_data_files_mapping_by_backend`, `test_build_task_script_override_and_record_update`) and real-backend integration tests (`test_integration_symlink_install_data_files`, `test_integration_setuptools_data_files_and_script_override`) with clean entry-point cache isolation.
+  - Full `colcon-core` suite passing (`256 passed, 5 skipped`), and **46/46 GitHub Actions checks passing** (Ubuntu, macOS, Windows $\times$ Python 3.8–3.14 + `codecov`).
 
 ---
 

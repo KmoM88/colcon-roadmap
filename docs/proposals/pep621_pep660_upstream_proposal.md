@@ -2,7 +2,7 @@
 
 This document outlines the architectural roadmap, upstream integration strategy, and current verification status for providing native modern Python packaging standards (PEP 517, PEP 518, PEP 621, and PEP 660) in `colcon-core` and `colcon-ros`.
 
-It connects the merged groundwork in `colcon-core` with open **PR [#750](https://github.com/colcon/colcon-core/pull/750)** and outlines the next self-contained stages to bring full standard packaging to the ROS 2 and colcon ecosystems.
+It connects the merged groundwork in `colcon-core` with open **PR [#750](https://github.com/colcon/colcon-core/pull/750)** and outlines the sequential, single-concern stages to bring full standard packaging to the ROS 2 and colcon ecosystems.
 
 ---
 
@@ -10,7 +10,7 @@ It connects the merged groundwork in `colcon-core` with open **PR [#750](https:/
 
 The Python packaging ecosystem has deprecated direct invocations of `setup.py install` and `setup.py develop`. Standard builds are now driven by `pyproject.toml` specifications (`[build-system]` and `[project]`) executed through standardized build backends (Flit, Hatchling, Setuptools, etc.).
 
-Rather than relying on an external prototype extension (`colcon-python-project`), this proposal establishes native, in-process, high-performance packaging across `colcon-core` and `colcon-ros` divided into four sequential stages:
+Rather than relying on an external prototype extension (`colcon-python-project`), this proposal establishes native, in-process, high-performance packaging across `colcon-core` and `colcon-ros` divided into five sequential stages:
 
 ```mermaid
 graph TD
@@ -26,22 +26,27 @@ graph TD
         S1C["Multi-Backend Integration Tests<br/>flit_core, hatchling scripts, clean rebuilds, editable"]
     end
 
-    subgraph Stage2["Stage 2: Editable Non-Python Data Files (colcon-core) — [READY]"]
-        S2["PEP 660 Data Files Symlinking<br/>Symlinks share/ assets during --symlink-install<br/>Branch: feature/pep660-editable-data-files"]
+    subgraph Stage2["Stage 2: Editable Data Files & Script Override (colcon-core) — [DRAFT PR #751]"]
+        S2["Backend-Scoped PEP 660 Data Files Symlinking<br/>Deduplicated RECORD & script_dir_override API<br/>Branch: feature/pep660-editable-data-files"]
     end
 
-    subgraph Stage3["Stage 3: ROS 2 ament_python Modernization (colcon-ros) — [READY]"]
-        S3["Native pyproject.toml in ament_python<br/>Dispatches to PythonProjectBuildTask<br/>Writes ament_index & environment hooks<br/>Branch: feature/ros-ament-python-project"]
+    subgraph Stage3["Stage 3: ROS 2 ament_python Modernization (colcon-ros) — [DRAFT PR #171]"]
+        S3["Native pyproject.toml in ament_python<br/>Routes scripts to lib/<pkg> for ros2 run<br/>Wires test metadata, ament_index & hooks<br/>Branch: feature/ros-ament-python-project"]
     end
 
-    subgraph Stage4["Stage 4: Deprecation & Transition — [PLANNED]"]
-        S4["Deprecate colcon-python-project<br/>Close prototype PR #1 with migration guide"]
+    subgraph Stage4["Stage 4: Follow-up Single-Concern Enhancements (colcon-core) — [PLANNED]"]
+        S4["• python.project colcon test task<br/>• SetuptoolsDecorator scratch isolation<br/>• Dynamic metadata hook & Windows symlink fallback"]
+    end
+
+    subgraph Stage5["Stage 5: Deprecation & Transition — [PLANNED]"]
+        S5["Deprecate colcon-python-project<br/>Close prototype PR #1 with migration guide"]
     end
 
     Merged --> Stage1
     Stage1 --> Stage2
     Stage2 --> Stage3
     Stage3 --> Stage4
+    Stage4 --> Stage5
 ```
 
 ---
@@ -69,7 +74,7 @@ The core packaging primitives have already been reviewed and merged into `colcon
 1. **Identification (`PEP621PackageIdentification`)**:
    - Inspects `pyproject.toml` for the `[project]` table using `load_and_cache_spec`.
    - Identifies package type as `python.project`.
-   - Configured with `PRIORITY = 90` (lower than legacy `setup.cfg`/`setup.py` at `100`), ensuring 100% backward compatibility for existing packages.
+   - Configured below legacy `setup.cfg` (`100`) to preserve backward compatibility. *(Note: lowering `PRIORITY` from `90` to `80` is recommended so it also ranks deterministically below `colcon-python-setup-py`'s `PRIORITY = 90` in hybrid repositories containing both `setup.py` and `pyproject.toml`).*
 2. **Metadata Augmentation (`PEP621PackageAugmentation`)**:
    - Maps `build-system.requires` $\rightarrow$ `build` dependencies.
    - Maps `project.dependencies` $\rightarrow$ `run` dependencies.
@@ -105,7 +110,7 @@ To facilitate upstream merging with zero risk to existing production workspaces,
   from colcon_core.feature_flags import is_feature_flag_set
 
   class PEP621PackageIdentification(PackageIdentificationExtensionPoint):
-      PRIORITY = 90  # Lower priority than legacy setup.py (100)
+      PRIORITY = 80  # Lower priority than setup.cfg (100) and setup.py (90)
 
       def identify(self, desc):
           if not is_feature_flag_set('pep621_builds'):
@@ -117,21 +122,25 @@ To facilitate upstream merging with zero risk to existing production workspaces,
 
 ---
 
-## 4. Stage 2: PEP 660 & Editable Non-Python Data Files
+## 4. Stage 2: PEP 660 Editable Data Files & Script Directory Override
 
-* **Status**: **Draft PR Opened**
+* **Status**: **Draft PR Opened & Verified (46/46 CI Checks Passing)**
 * **Pull Request**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751)
 * **Repository**: `colcon-core`
-* **Branch**: [`KmoM88/colcon-core:feature/pep660-editable-data-files`](https://github.com/KmoM88/colcon-core/tree/feature/pep660-editable-data-files) (Commit `d989ee4`)
+* **Branch**: [`KmoM88/colcon-core:feature/pep660-editable-data-files`](https://github.com/KmoM88/colcon-core/tree/feature/pep660-editable-data-files) (Commit `463df5f`)
 
 ### The Problem
-Standard Python packaging backends (Flit, Hatchling, Setuptools) only expose Python module files (`.py`) as editable when using PEP 660. Non-Python data assets (such as ROS 2 launch files, URDFs, YAML configuration, and rviz configs located in `share/<package>/`) are normally packaged into `.data/data/share/` and copied statically at build time. Under `--symlink-install`, editing a launch file would require a manual rebuild.
+1. **Editable Non-Python Assets**: PEP 660's `build_editable` hook only exposes Python modules (`.py`) dynamically. Non-Python assets installed into `share/<package>/` (launch files, YAML configs, URDFs) are either copied statically into `<dist>.data/` (Hatchling) or omitted altogether during `build_editable` (Setuptools), breaking live editing or dropping assets under `--symlink-install`.
+2. **Downstream Script Location Overrides**: Standard wheels place `[project.scripts]` entry points in `bin/`, whereas downstream ecosystems like ROS 2 (`ros2 run <pkg> <node>`) require package executables in `lib/<package_name>` without forcing packages to carry a legacy `setup.cfg`.
 
 ### The Solution
 `feature/pep660-editable-data-files` enhances `PythonProjectBuildTask`:
-- Detects declared data files in `setup.cfg` (`[options.data_files]`) or `pyproject.toml` (`[tool.setuptools.data-files]` and `[tool.hatch.build.targets.wheel.shared-data]`).
-- When `--symlink-install` is active, it calls `colcon_core.task.install()` to create true symbolic links directly from source directories to `install_base/share/...`.
-- All created symlinks are tracked and recorded into `.dist-info/RECORD` for clean removal upon package cleanup or rebuild.
+- **Optional `script_dir_override` Parameter**: Extends `PythonProjectBuildTask.build(*, additional_hooks=None, script_dir_override=None)` so downstream tasks can specify a fallback script directory when `setup.cfg` does not override it, while fixing `$base` expansion for relative `install_base` paths.
+- **Backend-Scoped Data Files Parity**: Scopes `_get_data_files_mapping(pkg, backend_name)` strictly to the active PEP 517 backend so release and `--symlink-install` builds maintain 100% parity:
+  - `setuptools.build_meta*`: resolves `setup.cfg` (`[options.data_files]`) and `pyproject.toml` (`[tool.setuptools.data-files]`) with glob expansion (`*`, `?`, `[`).
+  - `hatchling.*`: resolves `[tool.hatch.build.targets.wheel.shared-data]` for both individual file targets and recursive directory targets.
+  - Backends without external data-file semantics (e.g. `flit_core`) remain untouched.
+- **Deduplicated `.dist-info/RECORD`**: Replaces static `.data/` entries cleanly in `RECORD` when converted to symbolic links rather than appending duplicate lines with stale hashes.
 
 ---
 
@@ -140,49 +149,39 @@ Standard Python packaging backends (Flit, Hatchling, Setuptools) only expose Pyt
 * **Status**: **Draft PR Opened**
 * **Pull Request**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)
 * **Repository**: `colcon-ros`
-* **Branch**: [`KmoM88/colcon-ros:feature/ros-ament-python-project`](https://github.com/KmoM88/colcon-ros/tree/feature/ros-ament-python-project) (Commit `fc03806`)
+* **Branch**: [`KmoM88/colcon-ros:feature/ros-ament-python-project`](https://github.com/KmoM88/colcon-ros/tree/feature/ros-ament-python-project)
 
 ### The Problem
-In ROS 2, packages specifying `<build_type>ament_python</build_type>` in `package.xml` currently require a legacy `setup.py` script. Packages adopting standard `pyproject.toml` without `setup.py` fail build task resolution.
+In ROS 2, packages specifying `<build_type>ament_python</build_type>` in `package.xml` historically required `setup.py` and `setup.cfg` (`install_scripts=$base/lib/<pkg>`). Adopting pure `pyproject.toml` requires bridging `colcon-ros` to `PythonProjectBuildTask` while preserving `ros2 run` executable discovery, `colcon test` (`pytest`) matching, `ament_index` markers, and clean uninstallation.
 
 ### The Solution
-`feature/ros-ament-python-project` updates `AmentPythonBuildTask`:
-- Automatically detects if an `ament_python` package declares `pyproject.toml` without a `setup.py`.
-- Delegates the compilation and wheel extraction to `PythonProjectBuildTask`.
-- Seamlessly generates:
-  - ROS 2 `ament_index` resource markers (`share/ament_index/resource_index/packages/<pkg>`).
-  - Package metadata placement (`share/<pkg>/package.xml`).
-  - Standard colcon `.dsv` environment hooks (`AMENT_PREFIX_PATH`).
-- Verified with end-to-end integration tests using `flit_core`.
+`feature/ros-ament-python-project` updates `colcon-ros`:
+- **Build Delegation & `ros2 run` Compatibility**: Detects `ament_python` packages declaring `pyproject.toml` without `setup.py` and delegates to `PythonProjectBuildTask.build()` with `script_dir_override = Path('lib') / pkg.name` so `[project.scripts]` nodes install into `lib/<pkg>/` where `ros2 run` discovers them.
+- **ROS 2 Metadata & Clean `RECORD` Tracking**: Installs the `ament_index` package marker (`share/ament_index/resource_index/packages/<pkg>`), `share/<pkg>/package.xml` (respecting `--symlink-install` without clobbering wheel-provided manifests), and `AMENT_PREFIX_PATH` hooks, recording installed artifacts in `.dist-info/RECORD`.
+- **`colcon test` Support**: Wires `RosAmentPythonPackageAugmentation` to populate test metadata from `pyproject.toml` when `setup.py` is absent so `AmentPythonTestTask` matches `pytest` seamlessly.
+- **Dual-Manifest Guidance**: Documents declaring PEP 518 build backends (e.g. `python3-flit-core`, `python3-hatchling`, or `python3-setuptools` + `python3-wheel` on platforms with `setuptools < 70.1` such as Ubuntu 22.04/24.04) as `<build_depend>` in `package.xml` so `rosdep install` provisions them in non-isolated CI/buildfarm environments.
 
 ---
 
-## 6. Stage 4: Ecosystem Transition & Deprecation
+## 6. Stage 4: Follow-up Single-Concern Enhancements in `colcon-core`
+
+To keep core PRs small and independently reviewable after Stages 1–3, four targeted follow-up PRs are planned for `colcon-core`:
+
+1. **`python.project` Test Task (`colcon test`)**: Register `python.project` under `colcon_core.task.test` so pure PEP 621 non-ROS packages run `pytest` natively via `colcon test`.
+2. **Setuptools Scratch Directory Isolation**: Port `SetuptoolsDecorator` (`--build-base` / `--egg-base` temporary directory redirection) so `setuptools.build_meta` builds never leave `.egg-info/` directories in the source tree.
+3. **Dynamic Metadata Hook Integration**: Connect `PEP621PackageAugmentation` with `colcon_core.python_project.metadata.load_and_cache_metadata` (`prepare_metadata_for_build_wheel`) when `dynamic` fields (`version`, `dependencies`) are declared in `pyproject.toml`.
+4. **Windows Symlink Fallback**: Gracefully fall back to file copy with a warning when `os.symlink` lacks `SeCreateSymbolicLinkPrivilege` on Windows.
+
+---
+
+## 7. Stage 5: Ecosystem Transition & Deprecation
 
 * **Repository**: `colcon/colcon-python-project`
 * **Status**: **Planned post-merge**
 
 Once native support is merged into `colcon-core` and `colcon-ros`:
-1. Provide a deprecation notice in `colcon-python-project` advising users to transition to native `colcon-core` (built into recent releases).
-2. Close PR #1 in `colcon-python-project` with reference to the native implementation.
-3. Users will no longer require additional extension plugins to build pure PEP 621 or `ament_python` standard packages.
-
----
-
-## 7. Action Plan & Proposed Staged Review
-
-To keep upstream review friction minimal, we propose the following sequential workflow:
-
-1. **Review & Merge PR #750 (Stage 1)**:
-   - Validates that `cottsay/pep621` has 100% test coverage and matches `colcon-core` internal test guidelines.
-   - Once merged into `cottsay/pep621`, Scott Logan can merge `cottsay/pep621` into `colcon/colcon-core:master`.
-2. **Submit PR for Stage 2 (`feature/pep660-editable-data-files`)**:
-   - Rebase cleanly on `master` once Stage 1 lands.
-   - Adds data file symlinking for editable installs.
-3. **Submit PR for Stage 3 (`colcon-ros`)**:
-   - Opens PR against `colcon/colcon-ros:master` enabling native `pyproject.toml` in `ament_python`.
-4. **Deprecate Prototype**:
-   - Archive and document `colcon-python-project`.
+1. Provide a deprecation notice in `colcon-python-project` advising users to transition to native `colcon-core`.
+2. Close PR #1 in `colcon-python-project` referencing the upstream native implementation.
 
 ---
 
@@ -191,11 +190,12 @@ To keep upstream review friction minimal, we propose the following sequential wo
 | Stage | Repository | Feature Branch | Base Branch | Status / PR |
 | :--- | :--- | :--- | :--- | :--- |
 | **Stage 1** | `colcon-core` | `feature/pep621-upstream-pr` (`4a594c8`) | `cottsay/pep621` | **[colcon-core#750](https://github.com/colcon/colcon-core/pull/750)** (Under Review) |
-| **Stage 2** | `colcon-core` | `feature/pep660-editable-data-files` (`d989ee4`) | `master` | **[colcon-core#751](https://github.com/colcon/colcon-core/pull/751)** (Draft PR) |
-| **Stage 3** | `colcon-ros` | `feature/ros-ament-python-project` (`fc03806`) | `master` | **[colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)** (Draft PR) |
-| **Stage 4** | `colcon-python-project` | Deprecation Documentation | `master` | **Planned** |
+| **Stage 2** | `colcon-core` | `feature/pep660-editable-data-files` (`463df5f`) | `master` | **[colcon-core#751](https://github.com/colcon/colcon-core/pull/751)** (Draft PR) |
+| **Stage 3** | `colcon-ros` | `feature/ros-ament-python-project` | `master` | **[colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)** (Draft PR) |
+| **Stage 4** | `colcon-core` | Single-concern follow-up branches (`task.test`, `SetuptoolsDecorator`, dynamic metadata, Windows fallback) | `master` | **Planned** |
+| **Stage 5** | `colcon-python-project` | Deprecation Documentation | `master` | **Planned** |
 
 ---
 
 * **Published Gist**: [https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)  
-*Prepared by Federico Rossi ([@KmoM88](https://github.com/KmoM88))*
+*Prepared by Federico Rossi ([KmoM88](https://github.com/KmoM88))*

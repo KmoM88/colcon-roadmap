@@ -13,7 +13,7 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 * **Phase 1: Harmonize `cottsay/pep621`** $\rightarrow$ **COMPLETED** (Commit `816a0d3`).
 * **Phase 2: Multi-Backend Integration Testing** $\rightarrow$ **COMPLETED** (Commit `c40901a`, `flit_core` and `hatchling` test fixtures).
 * **Phase 3: Upstream PR for `colcon-core`** $\rightarrow$ **SUBMITTED ([colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750))** (Targeting `cottsay/pep621`).
-* **Phase 4: PEP 660 Editable Data Files Symlinking** $\rightarrow$ **DRAFT PR OPENED ([colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751))** (Commit `d989ee4`).
+* **Phase 4: PEP 660 Editable Data Files & Script Override** $\rightarrow$ **DRAFT PR UPDATED ([colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751))** (Commit `463df5f`, 46/46 CI checks passing).
 * **Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros`** $\rightarrow$ **DRAFT PR OPENED ([colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171))** (Commit `fc03806`).
 * **Phase 6: Prototype Deprecation (`colcon-python-project`)** $\rightarrow$ **PENDING UPSTREAM MERGE**.
 
@@ -58,7 +58,7 @@ All PR materials (titles, descriptions, test logs, and comparison links) are for
 
 ## 🧪 Verification & Linters
 
-* **`colcon-core`**: 24/24 unit and integration tests passing (`pytest`) in 0.70s; `flake8` clean (0 warnings).
+* **`colcon-core`**: Full suite passing (`256 passed, 5 skipped`, including unit, multi-backend integration, `flake8`, `scspell3k`, and copyright checks); **46/46 GitHub Actions checks green** on PR #751.
 * **`colcon-ros`**: 1/1 integration tests passing in 0.13s; `flake8` clean (0 warnings).
 
 ---

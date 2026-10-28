@@ -38,7 +38,7 @@ The technical implementation is completed across dedicated feature branches in `
 | `cottsay/pep621` (`816a0d3`) | `KmoM88/colcon-core` | **Completed** | Fixed async test runner (`run_until_complete`), PEP 621 identification, augmentation & build task. |
 | `feature/pep621-integration-tests` (`c40901a`) | `KmoM88/colcon-core` | **Completed** | Real multi-backend fixtures (`flit_core`, `hatchling`), CLI scripts, clean rebuilds. |
 | `feature/pep621-upstream-pr` (`4a594c8`) | `KmoM88/colcon-core` | **PR #750 Submitted** | PR [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) targeting `cottsay/pep621`. |
-| `feature/pep660-editable-data-files` (`d989ee4`) | `KmoM88/colcon-core` | **PR #751 (Draft)** | Draft PR [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (Symlink data files in `share/` during `--symlink-install`). |
+| `feature/pep660-editable-data-files` (`463df5f`) | `KmoM88/colcon-core` | **PR #751 (Draft, 46/46 CI Green)** | Draft PR [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (Backend-scoped editable data files, `script_dir_override`, unique `RECORD` entries). |
 | `feature/ros-ament-python-project` (`fc03806`) | `KmoM88/colcon-ros` | **PR #171 (Draft)** | Draft PR [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (`ament_python` with PEP 621 / `pyproject.toml`). |
 
 > [!IMPORTANT]
@@ -61,13 +61,13 @@ The technical implementation is completed across dedicated feature branches in `
 * **Validation**: Fixed async test runner via `run_until_complete`. End-to-end integration tests with real backends passing (100% test pass rate).
 * **Feature Flag Guard (`COLCON_FEATURE_FLAGS`)**: Gating available via `is_feature_flag_set('pep621_builds')` to facilitate upstream merge without risk of breaking existing workspaces.
 
-### Feature 3: PEP 660 Editable Installation (`--symlink-install`) & Data Files [COMPLETED]
-* **Status**: Implemented & Validated in fork (commit `de2050f`).
+### Feature 3: PEP 660 Editable Installation (`--symlink-install`), Data Files & Script Override [COMPLETED]
+* **Status**: Implemented & Validated in fork (`feature/pep660-editable-data-files`, commit `463df5f`, 46/46 GitHub Actions checks green).
 * **Scope**:
-  - Dispatches `build_editable` hook when `--symlink-install` is specified.
-  - Added `_get_data_files_mapping()`: discovers `setup.cfg` (`[options.data_files]`) and `pyproject.toml` (`[tool.setuptools.data-files]`, `[tool.hatch.build.targets.wheel.shared-data]`).
-  - Creates true filesystem symlinks for `share/` assets (launch files, parameter files) to keep them live-editable without rebuilds.
-* **Validation**: `test_integration_symlink_install_data_files` passing in `test/test_integration_pep621.py`.
+  - Dispatches `build_editable` hook when `--symlink-install` is specified, and exposes `script_dir_override` on `PythonProjectBuildTask.build()` for downstream tasks (`colcon-ros`).
+  - Added backend-scoped `_get_data_files_mapping(pkg, backend_name)`: resolves `setup.cfg` (`[options.data_files]`) and `pyproject.toml` (`[tool.setuptools.data-files]` with glob expansion) for Setuptools, and `[tool.hatch.build.targets.wheel.shared-data]` (file and directory targets) for Hatchling, maintaining 100% parity between standard and editable builds.
+  - Creates true filesystem symlinks for `share/` assets (launch files, parameter files) and updates `.dist-info/RECORD` in place without duplicate entries.
+* **Validation**: Unit tests in `test/test_task_python_project_build.py` and integration tests in `test/test_integration_pep621.py` passing (`256 passed, 5 skipped`).
 
 ### Feature 4: ROS 2 `ament_python` with Standard Python Builds [COMPLETED]
 * **Status**: Implemented & Validated in fork (`feature/ros-ament-python-project`, commit `fc03806` in `colcon-ros`).
