@@ -12,7 +12,7 @@ To run all 4 demonstration scenarios end-to-end and see the live outputs:
 
 ```bash
 # From the repository root using the virtual environment:
-submodules/kmom88-colcon-core/.venv/bin/python3 scripts/test_mock_packages.py
+submodules/colcon-ros/.venv/bin/python3 scripts/test_mock_packages.py
 ```
 
 ### Expected Output Summary
@@ -34,15 +34,17 @@ COLCON PYTHON STANDARDS: MOCK PACKAGES DEMO & VERIFICATION SUITE
 ✔ Scenario 2 PASSED: Modern PEP 621 wheel extraction verified.
 
 ▶ Running Scenario 3: Modern PEP 660 editable & symlinked data
-  [Symlink Install] Verified data file is OS symlink: share/data_pkg/launch/demo.launch.py -> .../demo.launch.py
+  [Standard Build] Verified shared-data copied to: share/data_pkg/launch/demo.launch.py
+  [Symlink Install] Verified data file links to source: share/data_pkg/launch/demo.launch.py -> .../demo.launch.py
   [Live Modification] Source edits reflected in install/ instantly!
 ✔ Scenario 3 PASSED: Non-Python data files symlinking verified.
 
 ▶ Running Scenario 4: Modern ROS 2 ament_python without setup.py
+  [Test Augmentation] Verified pytest dependency discovered for colcon test
   [ROS Index] Created resource index marker: share/ament_index/resource_index/packages/ros_pyproject_pkg
   [ROS Manifest] Copied package.xml to: share/ros_pyproject_pkg/package.xml
-  [ROS Hook] Generated environment hook: share/ros_pyproject_pkg/hook/ament_prefix_path.dsv
-  [ROS Node] Node executable installed: sample-node
+  [ROS Hook] Generated environment hook & package script: share/ros_pyproject_pkg/hook/ament_prefix_path.dsv
+  [ROS Node] Node executable installed at: lib/ros_pyproject_pkg/sample-node
   [Node Output] "Executing sample-node from modern ament_python package without setup.py!"
 ✔ Scenario 4 PASSED: Modern ROS 2 ament_python build verified.
 
@@ -134,8 +136,8 @@ modern-cli = "modern_flit_pkg.cli:main"
   │   └── demo.launch.py     <-- Non-code asset in share/
   ├── config/
   │   └── demo.yaml          <-- Parameter config in share/
-  ├── pyproject.toml
-  └── setup.cfg
+  ├── pyproject.toml         <-- Hatchling shared-data manifest
+  └── README.md
   ```
 
 #### The Editable Dilemma & Colcon's Solution:
@@ -169,10 +171,11 @@ modern-cli = "modern_flit_pkg.cli:main"
 2. **Build Routing**: `AmentPythonBuildTask` detects that `setup.py` is absent and `pyproject.toml` is present:
    - Instead of failing looking for `setup.py`, it automatically delegates wheel compilation to `PythonProjectBuildTask`.
 3. **Preserving ROS 2 Contracts**:
-   - Creates the resource index marker: `<install_base>/share/ament_index/resource_index/packages/ros_pyproject_pkg`.
-   - Copies `package.xml` into `<install_base>/share/ros_pyproject_pkg/package.xml`.
-   - Generates the `AMENT_PREFIX_PATH` environment hook (`ament_prefix_path.dsv` / `.sh`) and injects it into `dist-info/RECORD`.
-   - Compiles and links executables (e.g. `sample-node` in `<install_base>/bin`).
+   - Creates the resource index marker: `<install_base>/share/ament_index/resource_index/packages/ros_pyproject_pkg` and records it in `.dist-info/RECORD`.
+   - Copies (or symlinks under `--symlink-install`) `package.xml` into `<install_base>/share/ros_pyproject_pkg/package.xml` and records it in `.dist-info/RECORD`.
+   - Generates the `AMENT_PREFIX_PATH` environment hook (`ament_prefix_path.dsv` / `.sh`) and registers it in `package.dsv` / `package.sh` and `.dist-info/RECORD`.
+   - Installs `[project.scripts]` executables into `<install_base>/lib/ros_pyproject_pkg/` (`ros2 run` discovery path) via `script_dir_override`.
+   - Populates `get_python_setup_options` via `RosAmentPythonPackageAugmentation` so `colcon test` discovers `pytest`.
 
 ---
 

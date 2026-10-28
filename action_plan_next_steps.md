@@ -96,17 +96,19 @@ To structure the remaining work without risking regressions and ensuring clean u
 
 ---
 
-## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros` [DRAFT PR #171 OPENED]
+## Phase 5: ROS 2 `ament_python` Modernization in `colcon-ros` [DRAFT PR #171 — VERIFIED]
 
 * **Pull Request**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (Draft)
-* **Feature Branch**: `feature/ros-ament-python-project` in `submodules/colcon-ros` (`KmoM88/colcon-ros`, Commit `fc03806`).
+* **Feature Branch**: `feature/ros-ament-python-project` in `submodules/colcon-ros` (`KmoM88/colcon-ros`, Commit `359ab5c`).
 * **Implementation**:
-  - `AmentPythonBuildTask` in `colcon_ros/task/ament_python/build.py` automatically detects packages specifying `<build_type>ament_python</build_type>` with `pyproject.toml` (and no `setup.py`).
-  - Routes execution to `PythonProjectBuildTask` while preserving ROS index registration (`share/ament_index/...`), `package.xml` placement, and `AMENT_PREFIX_PATH` environment hooks.
+  - `AmentPythonBuildTask` in `colcon_ros/task/ament_python/build.py` detects packages specifying `<build_type>ament_python</build_type>` with `pyproject.toml` (and no `setup.py`) and delegates to `PythonProjectBuildTask`.
+  - Passes `script_dir_override=Path('lib') / pkg.name` so `[project.scripts]` executables install into `lib/<pkg>/` (`ros2 run` layout) without requiring `setup.cfg`.
+  - Passes flat `additional_hooks` so both `.dsv` and shell `ament_prefix_path` hooks are registered in `package.dsv` / `package.sh`.
+  - Installs `share/ament_index/resource_index/packages/<pkg>` and `share/<pkg>/package.xml` after wheel installation (preserving wheel-provided files and surviving repeated rebuilds) and records them in `.dist-info/RECORD`.
+  - Updates `RosAmentPythonPackageAugmentation` to read `[project.dependencies]`, `[project.optional-dependencies]`, and PEP 735 `[dependency-groups]` from `pyproject.toml` so `colcon test` (`AmentPythonTestTask`) matches `pytest`.
 * **Testing & Verification**:
-  - Added automated test `test/test_task_ament_python_build.py` exercising an end-to-end `ament_python` build with `flit_core`.
-  - Verified marker creation in `ament_index`, `package.xml` copying, `.dsv` hook creation, and module installation.
-  - Flake8 clean (0 errors) and test passing (`PASSED in 0.13s`).
+  - Full `colcon-ros` test suite passing (`16 passed`), including `test_flake8`, `test_spell_check`, `test_copyright_license`, backend-independent unit tests, and end-to-end `flit_core` integration tests.
+  - All 4 mock scenarios in `scripts/test_mock_packages.py` passing end-to-end.
 
 ---
 

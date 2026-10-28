@@ -33,12 +33,19 @@ from colcon_core.package_identification.pep621 \
     import PEP621PackageIdentification  # noqa: E402
 from colcon_core.package_identification.python \
     import PythonPackageIdentification  # noqa: E402
+from colcon_core.python_project.wheel \
+    import _get_script_maker  # noqa: E402
 from colcon_core.task import TaskContext  # noqa: E402
+from colcon_core.task.python import get_setup_data  # noqa: E402
 from colcon_core.task.python.build \
     import PythonBuildTask  # noqa: E402
+from colcon_core.task.python.test \
+    import has_test_dependency  # noqa: E402
 from colcon_core.task.python_project.build \
     import PythonProjectBuildTask  # noqa: E402
 
+from colcon_ros.package_augmentation.ros_ament_python \
+    import RosAmentPythonPackageAugmentation  # noqa: E402
 from colcon_ros.task.ament_python.build \
     import AmentPythonBuildTask  # noqa: E402
 
@@ -207,20 +214,31 @@ def test_scenario_3_modern_editable_data_files():
         build_base.mkdir()
         install_base.mkdir()
 
+        # 1. Verify standard build installs shared-data as regular file
+        std_task = PythonProjectBuildTask()
+        std_task.set_context(context=create_task_context(
+            desc, pkg_dir, build_base, install_base, False))
+        res = run_coro(std_task.build())
+        assert res is None, f'Standard build failed: {res}'
+
+        installed_launch = (
+            install_base / 'share' / 'data_pkg' / 'launch' / 'demo.launch.py'
+        )
+        assert installed_launch.is_file()
+        assert not installed_launch.is_symlink()
+        print('  [Standard Build] Verified shared-data copied to: '
+              f'{installed_launch.relative_to(install_base)}')
+
+        # 2. Verify --symlink-install replaces with a live filesystem symlink
         task = PythonProjectBuildTask()
         context = create_task_context(
             desc, pkg_dir, build_base, install_base, True)
         task.set_context(context=context)
         res = run_coro(task.build())
-        assert res is None, f'Build failed: {res}'
+        assert res is None, f'Editable build failed: {res}'
 
-        # Verify launch file in share/ is a true filesystem symlink
-        installed_launch = (
-            install_base / 'share' / 'data_pkg' / 'launch' / 'demo.launch.py'
-        )
-        assert installed_launch.is_symlink(), f'{installed_launch} not symlink'
-        assert installed_launch.resolve() == launch_src.resolve()
-        print('  [Symlink Install] Verified data file is OS symlink: '
+        assert os.path.samefile(installed_launch, launch_src)
+        print('  [Symlink Install] Verified data file links to source: '
               f'{installed_launch.relative_to(install_base)} -> {launch_src}')
 
         # Test live editing without rebuilding
@@ -252,6 +270,11 @@ def test_scenario_4_ros2_ament_pyproject():
     desc.name = 'ros_pyproject_pkg'
     desc.type = 'ros.ament_python'
 
+    RosAmentPythonPackageAugmentation().augment_package(desc)
+    assert has_test_dependency(get_setup_data(desc, {}), 'pytest')
+    print('  [Test Augmentation] Verified pytest dependency discovered for '
+          'colcon test')
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
         build_base = tmp_path / 'build'
@@ -259,12 +282,14 @@ def test_scenario_4_ros2_ament_pyproject():
         build_base.mkdir()
         install_base.mkdir()
 
-        task = AmentPythonBuildTask()
-        context = create_task_context(
-            desc, pkg_dir, build_base, install_base, False)
-        task.set_context(context=context)
-        res = run_coro(task.build())
-        assert res is None, f'Build failed: {res}'
+        for _ in range(2):
+            _get_script_maker.cache_clear()
+            task = AmentPythonBuildTask()
+            context = create_task_context(
+                desc, pkg_dir, build_base, install_base, False)
+            task.set_context(context=context)
+            res = run_coro(task.build())
+            assert res is None, f'Build failed: {res}'
 
         # Check Ament Index Marker
         marker = (
@@ -281,19 +306,25 @@ def test_scenario_4_ros2_ament_pyproject():
         print(f'  [ROS Manifest] Copied package.xml to: '
               f'{pkg_xml.relative_to(install_base)}')
 
-        # Check AMENT_PREFIX_PATH hook
+        # Check AMENT_PREFIX_PATH hook and package scripts
         hook_file = (
             install_base / 'share' / 'ros_pyproject_pkg' / 'hook' /
             'ament_prefix_path.dsv'
         )
+        pkg_dsv = install_base / 'share' / 'ros_pyproject_pkg' / 'package.dsv'
         assert hook_file.is_file(), 'Missing ament_prefix_path hook'
-        print(f'  [ROS Hook] Generated environment hook: '
+        assert 'ament_prefix_path' in pkg_dsv.read_text()
+        print(f'  [ROS Hook] Generated environment hook & package script: '
               f'{hook_file.relative_to(install_base)}')
 
-        # Check node CLI wrapper
-        node_cli = install_base / 'bin' / 'sample-node'
-        assert node_cli.is_file(), 'Missing sample-node in bin/'
-        print(f'  [ROS Node] Node executable installed: {node_cli.name}')
+        # Check node CLI wrapper in ROS 2 lib/<pkg>/ directory (ros2 run path)
+        node_cli = install_base / 'lib' / 'ros_pyproject_pkg' / 'sample-node'
+        assert node_cli.is_file(), (
+            f'Missing sample-node in lib/ros_pyproject_pkg/ ({node_cli})'
+        )
+        assert not (install_base / 'bin' / 'sample-node').exists()
+        print(f'  [ROS Node] Node executable installed at: '
+              f'{node_cli.relative_to(install_base)}')
 
         dist_infos = list(
             install_base.glob('**/ros_pyproject_pkg-0.2.0.dist-info')

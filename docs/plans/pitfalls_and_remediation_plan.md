@@ -201,8 +201,8 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- |
 | **TASK-1** | Post upstream comment on PR #750 proposing `PRIORITY = 80` | `colcon/colcon-core#750` | Review Comment | PR #750 open |
 | **TASK-2** | Support `script_dir_override` in `PythonProjectBuildTask.build()` | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) — **DONE (`463df5f`, 46/46 CI)** | TASK-1 |
-| **TASK-3** | Update `colcon-ros` PR #171: `script_dir_override = lib/<pkg>`, fix `additional_hooks`, wire metadata | `colcon-ros:feature/ros-ament-python-project` | In-place (PR #171) | TASK-2 |
+| **TASK-3** | Update `colcon-ros` PR #171: `script_dir_override = lib/<pkg>`, fix `additional_hooks`, wire metadata | `colcon-ros:feature/ros-ament-python-project` | In-place (PR #171) — **VERIFIED LOCALLY (16/16 pytest)** | TASK-2 |
 | **TASK-4** | Refactor editable data files & remove duplicate `RECORD` lines | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) — **DONE (`463df5f`, 46/46 CI)** | TASK-2 |
-| **TASK-5** | Update mock packages (03 and 04) and `scripts/test_mock_packages.py` | `colcon-roadmap:main` | Base Repo | TASK-3, TASK-4 |
+| **TASK-5** | Update mock packages (03 and 04) and `scripts/test_mock_packages.py` | `colcon-roadmap:main` | Base Repo — **VERIFIED LOCALLY (4/4 scenarios)** | TASK-3, TASK-4 |
 | **TASK-6** | Implement `PythonProjectTestTask` for `colcon test` | `colcon-core:feature/python-project-test` | New PR | PR #750 merged |
 | **TASK-7** | Port `SetuptoolsDecorator` scratch directory isolation | `colcon-core:feature/setuptools-decorator` | New PR | PR #750 merged |

@@ -9,5 +9,8 @@ description = "Modern ROS 2 ament_python package built with pyproject.toml"
 readme = "README.md"
 dependencies = []
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [project.scripts]
 sample-node = "ros_pyproject_pkg.node:main"

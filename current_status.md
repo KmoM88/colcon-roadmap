@@ -115,7 +115,7 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 | **Python Project Build Task** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Calls `install_wheel` & writes hooks, async tests fixed |
 | **PEP 660 Editable Hooks** | **Verified** | Fork commit `c40901a` / `colcon-core` | Dispatches `build_editable` + PEP 610 JSON |
 | **ROS Data Files & Script Override**| **Draft PR #751 (46/46 CI)**| [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) | Backend-scoped `share/` symlinking, unique `RECORD` updates & `script_dir_override` (`463df5f`) |
-| **ROS `ament_python` PEP 621**| **Draft PR #171**| [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) | Native support in `AmentPythonBuildTask` |
+| **ROS `ament_python` PEP 621**| **Draft PR #171 (16/16 pytest)**| [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) | `lib/<pkg>` script override, flat hooks, `RECORD`-tracked index/manifest & `colcon test` augmentation (`359ab5c`) |
 
 ---
 

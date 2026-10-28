@@ -146,10 +146,10 @@ To facilitate upstream merging with zero risk to existing production workspaces,
 
 ## 5. Stage 3: ROS 2 `ament_python` Modernization
 
-* **Status**: **Draft PR Opened**
+* **Status**: **Draft PR Opened & Verified (16/16 pytest Checks Passing)**
 * **Pull Request**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)
 * **Repository**: `colcon-ros`
-* **Branch**: [`KmoM88/colcon-ros:feature/ros-ament-python-project`](https://github.com/KmoM88/colcon-ros/tree/feature/ros-ament-python-project)
+* **Branch**: [`KmoM88/colcon-ros:feature/ros-ament-python-project`](https://github.com/KmoM88/colcon-ros/tree/feature/ros-ament-python-project) (Commit `359ab5c`)
 
 ### The Problem
 In ROS 2, packages specifying `<build_type>ament_python</build_type>` in `package.xml` historically required `setup.py` and `setup.cfg` (`install_scripts=$base/lib/<pkg>`). Adopting pure `pyproject.toml` requires bridging `colcon-ros` to `PythonProjectBuildTask` while preserving `ros2 run` executable discovery, `colcon test` (`pytest`) matching, `ament_index` markers, and clean uninstallation.
@@ -191,7 +191,7 @@ Once native support is merged into `colcon-core` and `colcon-ros`:
 | :--- | :--- | :--- | :--- | :--- |
 | **Stage 1** | `colcon-core` | `feature/pep621-upstream-pr` (`4a594c8`) | `cottsay/pep621` | **[colcon-core#750](https://github.com/colcon/colcon-core/pull/750)** (Under Review) |
 | **Stage 2** | `colcon-core` | `feature/pep660-editable-data-files` (`463df5f`) | `master` | **[colcon-core#751](https://github.com/colcon/colcon-core/pull/751)** (Draft PR) |
-| **Stage 3** | `colcon-ros` | `feature/ros-ament-python-project` | `master` | **[colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)** (Draft PR) |
+| **Stage 3** | `colcon-ros` | `feature/ros-ament-python-project` (`359ab5c`) | `master` | **[colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)** (Draft PR) |
 | **Stage 4** | `colcon-core` | Single-concern follow-up branches (`task.test`, `SetuptoolsDecorator`, dynamic metadata, Windows fallback) | `master` | **Planned** |
 | **Stage 5** | `colcon-python-project` | Deprecation Documentation | `master` | **Planned** |
 
