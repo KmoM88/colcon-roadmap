@@ -1,6 +1,9 @@
-# Stage 4 Branch Implementation Plan: Group A (`master`) & Group B (`cottsay/pep621`)
+# Stage 4 Branch Implementation & Verification Record: Group A (`master`) & Group B (`cottsay/pep621`)
 
-This document defines the branch-by-branch engineering plan for **Stage 4** in `submodules/kmom88-colcon-core` (`KmoM88/colcon-core`), splitting the four remaining `colcon-core` follow-ups into small, single-concern branches aligned with upstream `colcon` review conventions.
+This document defines the branch-by-branch engineering blueprint and records the completed implementation and fork-local GitHub Actions verification for **Stage 4** in `submodules/kmom88-colcon-core` (`KmoM88/colcon-core`), splitting the four `colcon-core` follow-ups into small, single-concern branches aligned with upstream `colcon` review conventions.
+
+> [!IMPORTANT]
+> **Implementation & Fork CI Verification Status**: All four single-concern branches have been implemented, verified locally (`flake8`, `scspell3k`, copyright, unit + real-backend integration suites), and pushed to `KmoM88/colcon-core` **without** opening draft PRs on upstream `colcon/colcon-core`. All four branches were validated together in fork-local PR **[KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5)** (`KmoM88:master` <- `KmoM88:ci/stage4-all-validation` @ `32dd42a`), passing **44/44 GitHub Actions matrix jobs** in run **[40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808)** (`272 passed, 5 skipped` locally).
 
 ---
 
@@ -16,29 +19,36 @@ flowchart TD
     M["colcon/colcon-core:master (6bfb100)<br/>Merged: #728, #732, #741"]
     P750["colcon/colcon-core#750<br/>KmoM88:feature/pep621-upstream-pr (4a594c8)<br/>Base: colcon:cottsay/pep621 (80acf29)"]
 
-    subgraph GA["Stage 4 — Group A (New Branches off master)"]
-        GA1["Branch 1 (Stage 4B / TASK-6)<br/>feature/setuptools-decorator<br/>Target: colcon:master"]
-        GA2["Branch 2 (Stage 4D / TASK-7)<br/>feature/wheel-script-dir-and-windows-symlink<br/>Target: colcon:master"]
+    subgraph GA["Stage 4 — Group A (Implemented off master 6bfb100)"]
+        GA1["Branch 1 (Stage 4B / TASK-6)<br/>feature/setuptools-decorator (bdf5077)"]
+        GA2["Branch 2 (Stage 4D / TASK-7)<br/>feature/wheel-script-dir-and-windows-symlink (85a79ae)"]
     end
 
-    subgraph GB["Stage 4 — Group B (New Branches off feature/pep621-upstream-pr)"]
-        GB1["Branch 3 (Stage 4A / TASK-8)<br/>feature/python-project-test-task<br/>Target: colcon:cottsay/pep621 -> master"]
-        GB2["Branch 4 (Stage 4C / TASK-9)<br/>feature/pep621-dynamic-metadata<br/>Target: colcon:cottsay/pep621 -> master"]
+    subgraph GB["Stage 4 — Group B (Implemented off feature/pep621-upstream-pr 4a594c8)"]
+        GB1["Branch 3 (Stage 4A / TASK-8)<br/>feature/python-project-test-task (d4b93bc)"]
+        GB2["Branch 4 (Stage 4C / TASK-9)<br/>feature/pep621-dynamic-metadata (49fcded)"]
     end
+
+    CI["Fork-Local GitHub Actions Validation<br/>KmoM88/colcon-core#5 (ci/stage4-all-validation @ 32dd42a)<br/>44/44 CI Jobs Passing (Run 40802478808)"]
 
     M --> GA1
     M --> GA2
     M --> P750
     P750 --> GB1
     P750 --> GB2
+    GA1 --> CI
+    GA2 --> CI
+    GB1 --> CI
+    GB2 --> CI
 ```
 
-| Group | Stage / Task | New Branch Name (`KmoM88/colcon-core`) | Fork Base Branch & Commit | Upstream PR Target | Pitfall(s) Addressed |
+| Group | Stage / Task | Pushed Branch & Commit (`KmoM88/colcon-core`) | Fork Base & Compare | Status & Verification | Pitfall(s) Addressed |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Group A** | **Stage 4B** (`TASK-6`) | `feature/setuptools-decorator` | `origin/master` (`6bfb100`) | `colcon/colcon-core:master` | Pitfall 8 (`setuptools` `.egg-info/` & `build/` source pollution) + PR #732 missing extension-point group entry |
-| **Group A** | **Stage 4D** (`TASK-7`) | `feature/wheel-script-dir-and-windows-symlink` *(optional split noted below)* | `origin/master` (`6bfb100`) | `colcon/colcon-core:master` | Pitfall 10 (cached `ScriptMaker` rebuild `FileNotFoundError`) & Pitfall 9 (Windows unprivileged `os.symlink` crash) |
-| **Group B** | **Stage 4A** (`TASK-8`) | `feature/python-project-test-task` | `origin/feature/pep621-upstream-pr` (`4a594c8`) | `colcon/colcon-core:cottsay/pep621` (then `master`) | Pitfall 2 (`colcon test` execution & PEP 621 / PEP 735 test options for pure `python.project`) |
-| **Group B** | **Stage 4C** (`TASK-9`) | `feature/pep621-dynamic-metadata` | `origin/feature/pep621-upstream-pr` (`4a594c8`) | `colcon/colcon-core:cottsay/pep621` (then `master`) | Pitfall 7 (`project.dynamic` resolution via `load_and_cache_metadata` & PEP 517 optional-hook fallback) |
+| **Group A** | **Stage 4B** (`TASK-6`) | [`feature/setuptools-decorator`](https://github.com/KmoM88/colcon-core/tree/feature/setuptools-decorator) (`bdf5077`) | `origin/master` (`6bfb100`) — [Compare](https://github.com/KmoM88/colcon-core/compare/master...feature/setuptools-decorator) | **Implemented & Fork-CI Green** (`243 passed, 5 skipped`; [PR #5](https://github.com/KmoM88/colcon-core/pull/5)) | Pitfall 8 (`setuptools` `.egg-info/` & `build/` source pollution) + PR #732 missing extension-point group entry |
+| **Group A** | **Stage 4D** (`TASK-7`) | [`feature/wheel-script-dir-and-windows-symlink`](https://github.com/KmoM88/colcon-core/tree/feature/wheel-script-dir-and-windows-symlink) (`85a79ae`) | `origin/master` (`6bfb100`) — [Compare](https://github.com/KmoM88/colcon-core/compare/master...feature/wheel-script-dir-and-windows-symlink) | **Implemented & Fork-CI Green** (`240 passed, 5 skipped`; [PR #5](https://github.com/KmoM88/colcon-core/pull/5)) | Pitfall 10 (cached `ScriptMaker` rebuild `FileNotFoundError`) & Pitfall 9 (Windows unprivileged `os.symlink` crash) |
+| **Group B** | **Stage 4A** (`TASK-8`) | [`feature/python-project-test-task`](https://github.com/KmoM88/colcon-core/tree/feature/python-project-test-task) (`d4b93bc`) | `origin/feature/pep621-upstream-pr` (`4a594c8`) — [Compare](https://github.com/KmoM88/colcon-core/compare/feature/pep621-upstream-pr...feature/python-project-test-task) | **Implemented & Fork-CI Green** (`256 passed, 5 skipped`; [PR #5](https://github.com/KmoM88/colcon-core/pull/5)) | Pitfall 2 (`colcon test` execution & PEP 621 / PEP 735 test options for pure `python.project`) |
+| **Group B** | **Stage 4C** (`TASK-9`) | [`feature/pep621-dynamic-metadata`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata) (`49fcded`) | `origin/feature/pep621-upstream-pr` (`4a594c8`) — [Compare](https://github.com/KmoM88/colcon-core/compare/feature/pep621-upstream-pr...feature/pep621-dynamic-metadata) | **Implemented & Fork-CI Green** (`257 passed, 5 skipped`; [PR #5](https://github.com/KmoM88/colcon-core/pull/5)) | Pitfall 7 (`project.dynamic` resolution via `load_and_cache_metadata` & PEP 517 optional-hook fallback) |
+| **Combined CI** | **Fork Validation** | [`ci/stage4-all-validation`](https://github.com/KmoM88/colcon-core/tree/ci/stage4-all-validation) (`32dd42a`) | `KmoM88:master` <- `KmoM88:ci/stage4-all-validation` | **[KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5)** — **44/44 CI Jobs Green** ([Run 40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808)) | Full integration across Ubuntu, macOS, Windows (Python 3.8–3.14, `stdeb`, `bootstrap`) |
 
 ---
 
@@ -180,23 +190,18 @@ Both `feature/python-project-test-task` (`4A`) and `feature/pep621-dynamic-metad
 
 ---
 
-## 4. Execution & Verification Checklist per Branch
+## 4. Completed Verification Record (Local Suites & Fork GitHub Actions CI)
 
-Every Stage 4 branch in `submodules/kmom88-colcon-core` follows the same verification gate before opening a draft PR:
+All four Stage 4 branches were verified individually and together on `KmoM88/colcon-core` without creating draft pull requests on upstream `colcon/colcon-core`:
 
-1. **Targeted Unit & Integration Tests**:
-   ```bash
-   cd submodules/kmom88-colcon-core && .venv/bin/pytest -v <new_and_modified_test_files>
-   ```
-2. **Full `colcon-core` Suite & Linters (`flake8`, `scspell3k`, copyright, entry-point cache isolation)**:
-   ```bash
-   cd submodules/kmom88-colcon-core && .venv/bin/pytest
-   ```
+1. **Per-Branch Local Full-Suite Verification (`submodules/kmom88-colcon-core/.venv/bin/pytest`)**:
+   - `feature/setuptools-decorator` (`bdf5077`): **`243 passed, 5 skipped`** (`flake8`, `scspell3k`, copyright, unit + real `setuptools.build_meta` integration tests with `minversion='64.0.0'` `stdeb` guard).
+   - `feature/wheel-script-dir-and-windows-symlink` (`85a79ae`): **`240 passed, 5 skipped`** (cached `ScriptMaker` rebuild test + cross-OS `_make_winerror(1314, ...)` Windows symlink fallback test).
+   - `feature/python-project-test-task` (`d4b93bc`): **`256 passed, 5 skipped`** (`PythonProjectTestTask`, PEP 621 / PEP 735 `include-group` augmentation, and end-to-end `flit_core` `pytest.xml` integration test).
+   - `feature/pep621-dynamic-metadata` (`49fcded`): **`257 passed, 5 skipped`** (`load_metadata` PEP 517 `build_wheel` fallback, zero-subprocess static guard, dynamic `flit_core` version integration test, and missing-backend warning fallback).
+2. **Combined Fork-Local GitHub Actions Matrix Verification ([KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5))**:
+   - **Integration Branch**: [`KmoM88/colcon-core:ci/stage4-all-validation`](https://github.com/KmoM88/colcon-core/tree/ci/stage4-all-validation) (`32dd42a`, merging Stage 1 `4a594c8` + Stage 2 `463df5f` + all four Stage 4 branches).
+   - **Local Full Suite**: **`272 passed, 5 skipped`** (`0` `flake8` / `scspell3k` / copyright warnings).
+   - **GitHub Actions CI Run**: **[40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808)** — **44/44 matrix jobs passing** across `ubuntu-22.04`, `macos-latest`, and `windows-latest` on Python 3.8–3.14, `stdeb`, and `bootstrap`.
 3. **Commit Hygiene**:
-   - Single-concern commit history signed off (`git commit -s`) as `Federico Rossi <rossif@google.com>`.
-   - Zero `@` mentions in commit messages or PR descriptions.
-4. **End-to-End Regression Check (Base Repo Mock Suite & Dockerized ROS 2 Jazzy PoC)**:
-   ```bash
-   submodules/colcon-ros/.venv/bin/python3 scripts/test_mock_packages.py
-   ./poc/run_poc.sh --target all
-   ```
+   - Single-concern commit history signed off (`git commit -s`) as `Federico Rossi <rossif@google.com>` with zero `@` mentions.

@@ -1,6 +1,6 @@
 # Action Plan & Execution Record: PEP 621 / Standard Python Builds
 
-This document tracks all completed implementation phases (Phases 1–5, corresponding to Stages 1–3) and defines the actionable plan for the remaining follow-up phases (Phases 6–7, corresponding to Stages 4–5).
+This document tracks all completed implementation phases (Phases 1–6, corresponding to Stages 1–4 + Final ROS 2 Jazzy PoC) and defines the post-merge transition step (Phase 7 / Stage 5).
 
 ---
 
@@ -83,27 +83,27 @@ This document tracks all completed implementation phases (Phases 1–5, correspo
 
 ---
 
-## Phase 6 (Stage 4): Follow-Up Single-Concern Branches in `colcon-core` [PLANNED]
+## Phase 6 (Stage 4): Follow-Up Single-Concern Branches in `colcon-core` [COMPLETED — PUSHED TO FORK & 44/44 FORK CI GREEN]
 
-To keep pull requests small and aligned with upstream review preferences, remaining `colcon-core` enhancements are planned across four single-concern branches in `submodules/kmom88-colcon-core` (`KmoM88/colcon-core`). Full branch blueprints, file changes, edge cases, and test plans are documented in **[docs/plans/stage4_branch_plan.md](docs/plans/stage4_branch_plan.md)**:
+To keep changes small and aligned with upstream review preferences while avoiding premature draft PRs on `colcon/colcon-core`, all four remaining `colcon-core` enhancements were implemented as single-concern branches in `submodules/kmom88-colcon-core` (`KmoM88/colcon-core`) and validated together via fork-local PR **[KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5)** (`KmoM88:master` <- `KmoM88:ci/stage4-all-validation` @ `32dd42a`, **44/44 GitHub Actions matrix jobs passing** in run [40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808), `272 passed, 5 skipped` locally). Full branch blueprints and verification details are maintained in **[docs/plans/stage4_branch_plan.md](docs/plans/stage4_branch_plan.md)**:
 
-### Group A — New Branches off `colcon/colcon-core:master` (`6bfb100`, Independent of `#750` / `#751`)
-1. **Stage 4B — Branch `feature/setuptools-decorator` (`origin/master` -> `colcon:master`)**:
-   - **Files**: `colcon_core/python_project/hook_caller_decorator/setuptools.py` [new], `setup.cfg` [modify], `test/test_hook_caller_decorator_setuptools.py` [new].
-   - **Scope**: Port `SetuptoolsHookCallerDecoratorExtension` (`HookCallerDecoratorExtensionPoint`, merged in PR #732) to redirect `--build-base` and `--egg-base` into temporary directories so `setuptools.build_meta` / `setuptools.build_meta:__legacy__` builds never write `.egg-info/` or `build/` into the package source directory; register `colcon_core.python_project.hook_caller_decorator` under `colcon_core.extension_point` in `setup.cfg`.
-2. **Stage 4D — Branch `feature/wheel-script-dir-and-windows-symlink` (`origin/master` -> `colcon:master`)**:
-   - **Files**: `colcon_core/python_project/wheel.py` [modify], `colcon_core/task/__init__.py` [modify], `test/test_install_wheel.py` [modify], `test/test_task.py` [modify].
-   - **Scope**:
-     - Ensure `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` before calling cached `ScriptMaker.make_multiple()` so repeated in-process builds after `remove_distributions()` removes an empty `script_dir` never fail with `FileNotFoundError`.
-     - Catch `OSError` (`winerror == 1314`) when `os.symlink()` lacks `SeCreateSymbolicLinkPrivilege` on Windows in `colcon_core.task.install()`, emit a warning, and fall back to copying the file.
+### Group A — Implemented Branches off `KmoM88/colcon-core:master` (`6bfb100`, Independent of `#750` / `#751`)
+1. **Stage 4B — Branch [`feature/setuptools-decorator`](https://github.com/KmoM88/colcon-core/tree/feature/setuptools-decorator) (Commit `bdf5077`, [Fork Compare](https://github.com/KmoM88/colcon-core/compare/master...feature/setuptools-decorator))**:
+   - **Files**: `colcon_core/python_project/hook_caller_decorator/setuptools.py` [new], `setup.cfg` [modified], `test/test_hook_caller_decorator_setuptools.py` [new].
+   - **Delivered**: Implemented `SetuptoolsHookCallerDecoratorExtension` & `SetuptoolsDecorator` redirecting `--build-base` (`--build-option` on `setuptools >= 64`, `--global-option` on `< 64`) and `--egg-base` (`--global-option` for `get_requires_for_build_*`, `--build-option` / `--global-option` for `build_wheel`) into temporary directories so `setuptools.build_meta` / `setuptools.build_meta:__legacy__` builds never write `.egg-info/` or `build/` into the package source directory; registered `colcon_core.python_project.hook_caller_decorator` under `colcon_core.extension_point` in `setup.cfg` (`243 passed, 5 skipped` locally).
+2. **Stage 4D — Branch [`feature/wheel-script-dir-and-windows-symlink`](https://github.com/KmoM88/colcon-core/tree/feature/wheel-script-dir-and-windows-symlink) (Commit `85a79ae`, [Fork Compare](https://github.com/KmoM88/colcon-core/compare/master...feature/wheel-script-dir-and-windows-symlink))**:
+   - **Files**: `colcon_core/python_project/wheel.py` [modified], `colcon_core/task/__init__.py` [modified], `test/spell_check.words` [modified], `test/test_install_wheel.py` [modified], `test/test_task.py` [modified].
+   - **Delivered**:
+     - Ensured `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` before calling cached `ScriptMaker.make_multiple()` so repeated in-process builds after `remove_distributions()` removes an empty `script_dir` never fail with `FileNotFoundError`.
+     - Caught `OSError` (`winerror == 1314`) when `os.symlink()` lacks `SeCreateSymbolicLinkPrivilege` on Windows in `colcon_core.task.install()`, emitted a warning, and fell back to `shutil.copy` (`240 passed, 5 skipped` locally).
 
-### Group B — New Branches Stacked on `feature/pep621-upstream-pr` (`4a594c8` / `cottsay/pep621` `#750`)
-3. **Stage 4A — Branch `feature/python-project-test-task` (`origin/feature/pep621-upstream-pr` -> `colcon:cottsay/pep621`, then `master`)**:
-   - **Files**: `colcon_core/task/python_project/test.py` [new], `colcon_core/package_augmentation/pep621.py` [modify], `setup.cfg` [modify], `test/test_task_python_project_test.py` [new], `test/test_package_augmentation_pep621.py` [modify], `test/test_integration_pep621.py` [modify].
-   - **Scope**: Add `PythonProjectTestTask(PythonTestTask)` (overriding `add_arguments` to avoid duplicate `--python-testing` registration), register `python.project` under `colcon_core.task.test`, and populate static `get_python_setup_options` in `PEP621PackageAugmentation` across `[project.optional-dependencies]` (`test`/`tests`/`testing`) and PEP 735 `[dependency-groups]` so pure non-ROS `python.project` packages execute `pytest` via `colcon test`.
-4. **Stage 4C — Branch `feature/pep621-dynamic-metadata` (`origin/feature/pep621-upstream-pr` -> `colcon:cottsay/pep621`, then `master`)**:
-   - **Files**: `colcon_core/python_project/metadata.py` [modify], `colcon_core/package_augmentation/pep621.py` [modify], `test/test_python_project_metadata.py` [new], `test/test_package_augmentation_pep621.py` [modify].
-   - **Scope**: Connect `PEP621PackageAugmentation` to `colcon_core.python_project.metadata.load_and_cache_metadata()` when `project.dynamic` declares `version`, `dependencies`, `optional-dependencies`, `maintainers`, or `authors`, add PEP 517 `build_wheel` fallback when optional `prepare_metadata_for_build_wheel` is absent, and degrade gracefully with a warning if build backends are missing during discovery.
+### Group B — Implemented Branches Stacked on `feature/pep621-upstream-pr` (`4a594c8` / `cottsay/pep621` `#750`)
+3. **Stage 4A — Branch [`feature/python-project-test-task`](https://github.com/KmoM88/colcon-core/tree/feature/python-project-test-task) (Commit `d4b93bc`, [Fork Compare](https://github.com/KmoM88/colcon-core/compare/feature/pep621-upstream-pr...feature/python-project-test-task))**:
+   - **Files**: `colcon_core/task/python_project/test.py` [new], `colcon_core/package_augmentation/pep621.py` [modified], `setup.cfg` [modified], `test/test_task_python_project_test.py` [new], `test/test_package_augmentation_pep621.py` [modified], `test/test_integration_pep621.py` [modified].
+   - **Delivered**: Added `PythonProjectTestTask(PythonTestTask)` (overriding `add_arguments` to avoid duplicate `--python-testing` registration), registered `python.project` under `colcon_core.task.test`, and populated static `get_python_setup_options` in `PEP621PackageAugmentation` across `[project.optional-dependencies]` (`test`/`tests`/`testing`) and cycle-safe PEP 735 `[dependency-groups]` (`include-group`) so pure non-ROS `python.project` packages execute `pytest` via `colcon test` (`256 passed, 5 skipped` locally).
+4. **Stage 4C — Branch [`feature/pep621-dynamic-metadata`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata) (Commit `49fcded`, [Fork Compare](https://github.com/KmoM88/colcon-core/compare/feature/pep621-upstream-pr...feature/pep621-dynamic-metadata))**:
+   - **Files**: `colcon_core/python_project/metadata.py` [modified], `colcon_core/package_augmentation/pep621.py` [modified], `test/spell_check.words` [modified], `test/test_python_project_metadata.py` [new], `test/test_package_augmentation_pep621.py` [modified], `test/test_integration_pep621.py` [modified].
+   - **Delivered**: Connected `PEP621PackageAugmentation` to `colcon_core.python_project.metadata.load_and_cache_metadata()` when `project.dynamic` declares `version`, `dependencies`, `optional-dependencies`, `maintainers`, or `authors`, added PEP 517 `build_wheel` fallback when optional `prepare_metadata_for_build_wheel` is absent, and degraded gracefully with a warning if build backends are missing during discovery (`257 passed, 5 skipped` locally).
 
 ---
 

@@ -8,7 +8,7 @@ This document summarizes the implemented architecture, delivered pull requests, 
 
 Direct invocations of `setup.py install` and `setup.py develop` have been deprecated across the Python packaging ecosystem in favor of `pyproject.toml` specifications (`[build-system]` and `[project]`) executed via standard PEP 517/660 build hooks.
 
-Building on the merged wheel and hook-caller foundations in `colcon-core`, native support is delivered across three focused pull requests covering `colcon-core` (`#750`, `#751`) and `colcon-ros` (`#171`):
+Building on the merged wheel and hook-caller foundations in `colcon-core`, native support is delivered across three upstream pull requests covering `colcon-core` (`#750`, `#751`) and `colcon-ros` (`#171`), complemented by four single-concern `colcon-core` follow-up branches verified across the full 44-job GitHub Actions matrix in fork validation PR [KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5):
 
 ```mermaid
 graph TD
@@ -32,8 +32,14 @@ graph TD
         S3["Native pyproject.toml builds without setup.py<br/>Routes scripts to lib/<pkg> for ros2 run<br/>Post-wheel ament_index & package.xml in RECORD<br/>RosAmentPythonPackageAugmentation for colcon test"]
     end
 
+    subgraph Stage4["Stage 4: Single-Concern colcon-core Branches (KmoM88/colcon-core#5)"]
+        S4["SetuptoolsDecorator scratch build/egg isolation<br/>Wheel cached ScriptMaker mkdir & Windows symlink fallback<br/>PythonProjectTestTask & PEP 735 colcon test options<br/>Dynamic PEP 621 metadata hook & build_wheel fallback<br/>44/44 GitHub Actions matrix jobs passing"]
+    end
+
     Merged --> Stage1
+    Merged --> Stage4
     Stage1 --> Stage2
+    Stage1 --> Stage4
     Stage2 --> Stage3
 ```
 
@@ -117,9 +123,30 @@ The core packaging primitives are merged in `colcon-core` (`master`, released in
 
 ---
 
-## 6. End-to-End ROS 2 Jazzy Dockerized Validation Results
+## 6. Stage 4: Single-Concern `colcon-core` Follow-Up Branches (`KmoM88/colcon-core#5`)
 
-In addition to unit suites and mock packages, the delivered `colcon-core` (`#750` + `#751`) and `colcon-ros` (`#171`) stack was validated inside a reproducible `ros:jazzy-ros-core` (Ubuntu 24.04, Python 3.12) Docker environment across active official `ros2/*` packages migrated to pure PEP 621 `pyproject.toml` (`setup.py` and `setup.cfg` deleted):
+* **Fork Validation Pull Request**: [KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5) (`KmoM88:master` <- [`KmoM88:ci/stage4-all-validation`](https://github.com/KmoM88/colcon-core/tree/ci/stage4-all-validation), Commit `32dd42a`)
+* **Verification**: **44/44 GitHub Actions matrix jobs passing** in run [40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808) (Ubuntu, macOS, Windows across Python 3.8–3.14, `stdeb`, and `bootstrap`); `272 passed, 5 skipped` locally (`flake8`, `scspell3k`, copyright, unit, and real-backend integration suites).
+
+### Delivered Capabilities Across Four Single-Concern Branches
+1. **`SetuptoolsDecorator` Scratch Build & Egg-Info Isolation ([`feature/setuptools-decorator`](https://github.com/KmoM88/colcon-core/tree/feature/setuptools-decorator), Commit `bdf5077`, off `master` `6bfb100`)**:
+   - Implements `SetuptoolsHookCallerDecoratorExtension` (`colcon_core/python_project/hook_caller_decorator/setuptools.py`) redirecting `build --build-base` and `egg_info --egg-base` into temporary directories (`--build-option` on `setuptools >= 64`, `--global-option` on `setuptools < 64` and `get_requires_for_build_*`) so `setuptools.build_meta` and `setuptools.build_meta:__legacy__` builds leave zero `.egg-info/` or `build/` directories in the package source tree.
+   - Registers `colcon_core.python_project.hook_caller_decorator` under `colcon_core.extension_point` in `setup.cfg` so entry-point-backed hook caller decorators are discovered by `get_all_extension_points()`.
+2. **Cached `ScriptMaker` Rebuild Fix & Windows Symlink Privilege Fallback ([`feature/wheel-script-dir-and-windows-symlink`](https://github.com/KmoM88/colcon-core/tree/feature/wheel-script-dir-and-windows-symlink), Commit `85a79ae`, off `master` `6bfb100`)**:
+   - Ensures `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` when `specs` is non-empty before invoking `functools.lru_cache`-backed `_get_script_maker(script_dir)`, preventing `FileNotFoundError` on repeated in-process builds after `remove_distributions()` prunes an empty `script_dir`.
+   - Catches `OSError` with `winerror == 1314` (`ERROR_PRIVILEGE_NOT_HELD`) around `os.symlink()` on Windows in `colcon_core.task.install()`, logs a warning, and falls back to `shutil.copy`.
+3. **Pure `python.project` Test Task & PEP 735 Dependency-Groups Support ([`feature/python-project-test-task`](https://github.com/KmoM88/colcon-core/tree/feature/python-project-test-task), Commit `d4b93bc`, off `feature/pep621-upstream-pr` `4a594c8`)**:
+   - Adds `PythonProjectTestTask(PythonTestTask)` (`colcon_core/task/python_project/test.py`, overriding `add_arguments` to avoid duplicate `--python-testing` registration) and registers `python.project` under `colcon_core.task.test` in `setup.cfg`.
+   - Populates `get_python_setup_options` in `PEP621PackageAugmentation` from `[project.dependencies]`, `[project.optional-dependencies]` (`test`, `tests`, `testing`), and cycle-safe PEP 735 `[dependency-groups]` (`include-group` resolution), enabling `colcon test` (`PytestPythonTestingStep`) on pure non-ROS `python.project` packages.
+4. **Dynamic PEP 621 Metadata Resolution & PEP 517 `build_wheel` Fallback ([`feature/pep621-dynamic-metadata`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata), Commit `49fcded`, off `feature/pep621-upstream-pr` `4a594c8`)**:
+   - Connects `PEP621PackageAugmentation` to `load_and_cache_metadata` when `project.dynamic` declares `version`, `dependencies`, `optional-dependencies`, `maintainers`, or `authors`, incurring zero subprocess overhead for static `pyproject.toml` manifests and degrading gracefully with a warning when build backends are absent during discovery.
+   - Adds a PEP 517 `build_wheel` `.dist-info/METADATA` fallback in `colcon_core/python_project/metadata.py` (`load_metadata`) when a backend omits the optional `prepare_metadata_for_build_wheel` hook.
+
+---
+
+## 7. End-to-End ROS 2 Jazzy Dockerized & GitHub Actions Validation Results
+
+In addition to unit suites and mock packages, the delivered `colcon-core` (`#750` + `#751`) and `colcon-ros` (`#171`) stack was validated both locally and in GitHub Actions (run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655)) inside a reproducible `ros:jazzy-ros-core` (Ubuntu 24.04, Python 3.12) Docker environment across active official `ros2/*` packages migrated to pure PEP 621 `pyproject.toml` (`setup.py` and `setup.cfg` deleted):
 
 | Active `ros2/*` Repository | Migrated Package(s) | PEP 517/660 Backend | Verified Results |
 | :--- | :--- | :--- | :--- |
@@ -129,7 +156,7 @@ In addition to unit suites and mock packages, the delivered `colcon-core` (`#750
 
 ---
 
-## 7. Summary of Delivered Pull Requests & Verification Results
+## 8. Summary of Delivered Pull Requests, Fork-Verified Branches & CI Results
 
 | Deliverable | Repository | Branch & Commit | Target Base | Status & Verification |
 | :--- | :--- | :--- | :--- | :--- |
@@ -139,6 +166,12 @@ In addition to unit suites and mock packages, the delivered `colcon-core` (`#750
 | **[colcon-core#750](https://github.com/colcon/colcon-core/pull/750)** | `colcon-core` | `feature/pep621-upstream-pr` (`4a594c8`) | `cottsay/pep621` | **Open PR** — Core PEP 621 tests, `run_until_complete` alignment, multi-backend integration suite |
 | **[colcon-core#751](https://github.com/colcon/colcon-core/pull/751)** | `colcon-core` | `feature/pep660-editable-data-files` (`463df5f`) | `master` | **Draft PR** — **46/46 GitHub Actions CI green** (`256 passed, 5 skipped` locally) |
 | **[colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171)** | `colcon-ros` | `feature/ros-ament-python-project` (`359ab5c`) | `master` | **Draft PR** — **16/16 `pytest --cov --cov-branch` green** + **4/4 end-to-end mock scenarios verified** |
+| **[KmoM88/colcon-core:feature/setuptools-decorator](https://github.com/KmoM88/colcon-core/tree/feature/setuptools-decorator)** | `KmoM88/colcon-core` | `feature/setuptools-decorator` (`bdf5077`) | `master` (`6bfb100`) | **Fork Branch Verified** — `SetuptoolsDecorator` scratch isolation + decorator group registration (`243 passed, 5 skipped`; 44/44 fork CI green) |
+| **[KmoM88/colcon-core:feature/wheel-script-dir-and-windows-symlink](https://github.com/KmoM88/colcon-core/tree/feature/wheel-script-dir-and-windows-symlink)** | `KmoM88/colcon-core` | `feature/wheel-script-dir-and-windows-symlink` (`85a79ae`) | `master` (`6bfb100`) | **Fork Branch Verified** — `wheel.py` cached `ScriptMaker` `script_dir.mkdir` + Windows `winerror 1314` copy fallback (`240 passed, 5 skipped`; 44/44 fork CI green) |
+| **[KmoM88/colcon-core:feature/python-project-test-task](https://github.com/KmoM88/colcon-core/tree/feature/python-project-test-task)** | `KmoM88/colcon-core` | `feature/python-project-test-task` (`d4b93bc`) | `feature/pep621-upstream-pr` (`4a594c8`) | **Fork Branch Verified** — `PythonProjectTestTask` + static PEP 621 / PEP 735 `colcon test` options (`256 passed, 5 skipped`; 44/44 fork CI green) |
+| **[KmoM88/colcon-core:feature/pep621-dynamic-metadata](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata)** | `KmoM88/colcon-core` | `feature/pep621-dynamic-metadata` (`49fcded`) | `feature/pep621-upstream-pr` (`4a594c8`) | **Fork Branch Verified** — Dynamic PEP 621 metadata via `load_and_cache_metadata` + PEP 517 `build_wheel` fallback (`257 passed, 5 skipped`; 44/44 fork CI green) |
+| **[KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5)** | `KmoM88/colcon-core` | `ci/stage4-all-validation` (`32dd42a`) | `KmoM88:master` | **Fork CI Validation PR** — **44/44 GitHub Actions matrix jobs green** ([Run 40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808), `272 passed, 5 skipped` locally) |
+| **[ROS 2 Jazzy Multi-Backend PoC](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655)** | `KmoM88/colcon-roadmap` | `main` (`poc/`) | `ros:jazzy-ros-core` | **GitHub Actions Verified** — 6-stage Dockerized ROS 2 Jazzy showcase across `ros2/demos`, `ros2/examples`, and `ros2/teleop_twist_keyboard` |
 
 ---
 

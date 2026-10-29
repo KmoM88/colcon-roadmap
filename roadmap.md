@@ -28,7 +28,7 @@ This roadmap tracks the delivery of modern Python packaging standards (PEP 517/5
 
 ---
 
-## 3. Delivered Features & Active Pull Requests (Stages 1–3)
+## 3. Delivered Features & Active Pull Requests (Stages 1–4)
 
 | Stage & Branch | Repository | Status | Focus & Deliverable |
 | :--- | :--- | :--- | :--- |
@@ -37,6 +37,10 @@ This roadmap tracks the delivery of modern Python packaging standards (PEP 517/5
 | **Stage 1**: `feature/pep621-upstream-pr` (`4a594c8`) | `KmoM88/colcon-core` | **PR #750 Submitted** | [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) targeting `cottsay/pep621`. |
 | **Stage 2**: `feature/pep660-editable-data-files` (`463df5f`) | `KmoM88/colcon-core` | **PR #751 (Draft, 46/46 CI Green)** | [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751): Backend-scoped editable data files, `script_dir_override` + `$base` fix, deduplicated `RECORD` updates (`256 passed, 5 skipped`). |
 | **Stage 3**: `feature/ros-ament-python-project` (`359ab5c`) | `KmoM88/colcon-ros` | **PR #171 (Draft, 16/16 pytest Green)** | [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171): `ament_python` `pyproject.toml` builds, `lib/<pkg>` script override for `ros2 run`, flat hooks, post-wheel `RECORD` tracking, and `colcon test` augmentation. |
+| **Stage 4B (Group A)**: [`feature/setuptools-decorator`](https://github.com/KmoM88/colcon-core/tree/feature/setuptools-decorator) (`bdf5077`) | `KmoM88/colcon-core` | **Pushed & Fork-CI Green ([PR #5](https://github.com/KmoM88/colcon-core/pull/5))** | `SetuptoolsHookCallerDecoratorExtension` isolating `--build-base` / `--egg-base` + `hook_caller_decorator` registration in `setup.cfg`. |
+| **Stage 4D (Group A)**: [`feature/wheel-script-dir-and-windows-symlink`](https://github.com/KmoM88/colcon-core/tree/feature/wheel-script-dir-and-windows-symlink) (`85a79ae`) | `KmoM88/colcon-core` | **Pushed & Fork-CI Green ([PR #5](https://github.com/KmoM88/colcon-core/pull/5))** | `script_dir.mkdir(parents=True, exist_ok=True)` in `wheel.py` for cached `ScriptMaker` rebuilds + Windows `winerror 1314` symlink copy fallback. |
+| **Stage 4A (Group B)**: [`feature/python-project-test-task`](https://github.com/KmoM88/colcon-core/tree/feature/python-project-test-task) (`d4b93bc`) | `KmoM88/colcon-core` | **Pushed & Fork-CI Green ([PR #5](https://github.com/KmoM88/colcon-core/pull/5))** | `PythonProjectTestTask` registered under `colcon_core.task.test` + static PEP 621 / PEP 735 `get_python_setup_options`. |
+| **Stage 4C (Group B)**: [`feature/pep621-dynamic-metadata`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata) (`49fcded`) | `KmoM88/colcon-core` | **Pushed & Fork-CI Green ([PR #5](https://github.com/KmoM88/colcon-core/pull/5))** | `PEP621PackageAugmentation` dynamic metadata resolution via `load_and_cache_metadata` + PEP 517 `build_wheel` fallback. |
 | **Final Phase PoC**: [`poc/`](poc/README.md) & [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) | `KmoM88/colcon-roadmap` + `KmoM88/{demos,examples,teleop_twist_keyboard}` | **Implemented & Verified ([Run 40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655))** | Dockerized & GitHub Actions ROS 2 Jazzy 6-stage showcase across active `ros2/*` packages migrated to pure `pyproject.toml` (`hatchling`, `flit_core`, `setuptools.build_meta`). |
 
 > [!IMPORTANT]
@@ -75,25 +79,25 @@ This roadmap tracks the delivery of modern Python packaging standards (PEP 517/5
 
 ---
 
-## 4. Planned Next Stages (Stages 4–5)
+## 4. Stage 4 Follow-Up Branches (Implemented & Fork-CI Verified) & Stage 5 Transition
 
 > [!NOTE]
-> Complete branch-by-branch specifications, base commits, file lists, edge-case analyses, and test plans for Stage 4 Group A and Group B are maintained in **[docs/plans/stage4_branch_plan.md](docs/plans/stage4_branch_plan.md)**.
+> Complete branch-by-branch specifications, commit SHAs, file lists, edge-case analyses, and verification logs for Stage 4 Group A and Group B are maintained in **[docs/plans/stage4_branch_plan.md](docs/plans/stage4_branch_plan.md)**. Per review strategy, all four branches are pushed to `KmoM88/colcon-core` without creating draft PRs on `colcon/colcon-core`, and validated together via fork PR **[KmoM88/colcon-core#5](https://github.com/KmoM88/colcon-core/pull/5)** (`ci/stage4-all-validation` @ `32dd42a`, **44/44 GitHub Actions matrix jobs passing** in run [40802478808](https://github.com/KmoM88/colcon-core/actions/runs/40802478808)).
 
-### Stage 4 — Group A: New Branches off `colcon/colcon-core:master` (`6bfb100`)
-| Stage | New Branch (`KmoM88/colcon-core`) | Base -> Upstream Target | Planned Deliverables |
+### Stage 4 — Group A: Implemented Branches off `KmoM88/colcon-core:master` (`6bfb100`)
+| Stage | Pushed Branch & Commit (`KmoM88/colcon-core`) | Base & Fork Compare | Delivered & Verified Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Stage 4B** | `feature/setuptools-decorator` | `origin/master` (`6bfb100`) -> `colcon:master` | Port `SetuptoolsHookCallerDecoratorExtension` (`colcon_core/python_project/hook_caller_decorator/setuptools.py`) to isolate `--build-base` and `--egg-base` in temporary directories (zero `.egg-info/` or `build/` in source tree), and register `colcon_core.python_project.hook_caller_decorator` under `colcon_core.extension_point` in `setup.cfg`. |
-| **Stage 4D** | `feature/wheel-script-dir-and-windows-symlink` | `origin/master` (`6bfb100`) -> `colcon:master` | Ensure `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` before calling cached `ScriptMaker.make_multiple()` after `remove_distributions()`, and catch Windows `winerror 1314` in `colcon_core.task.install()` to warn and fall back to file copy. |
+| **Stage 4B** | [`feature/setuptools-decorator`](https://github.com/KmoM88/colcon-core/tree/feature/setuptools-decorator) (`bdf5077`) | `origin/master` (`6bfb100`) — [Compare](https://github.com/KmoM88/colcon-core/compare/master...feature/setuptools-decorator) | `SetuptoolsHookCallerDecoratorExtension` (`colcon_core/python_project/hook_caller_decorator/setuptools.py`) isolating `--build-base` and `--egg-base` in temporary directories (zero `.egg-info/` or `build/` in source tree), plus `colcon_core.python_project.hook_caller_decorator` registration in `setup.cfg` (`243 passed, 5 skipped` locally; 44/44 fork CI green). |
+| **Stage 4D** | [`feature/wheel-script-dir-and-windows-symlink`](https://github.com/KmoM88/colcon-core/tree/feature/wheel-script-dir-and-windows-symlink) (`85a79ae`) | `origin/master` (`6bfb100`) — [Compare](https://github.com/KmoM88/colcon-core/compare/master...feature/wheel-script-dir-and-windows-symlink) | `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` before calling cached `ScriptMaker.make_multiple()` after `remove_distributions()`, plus Windows `winerror 1314` warning and copy fallback in `colcon_core.task.install()` (`240 passed, 5 skipped` locally; 44/44 fork CI green). |
 
-### Stage 4 — Group B: New Branches Stacked on `feature/pep621-upstream-pr` (`4a594c8` / `cottsay/pep621` `#750`)
-| Stage | New Branch (`KmoM88/colcon-core`) | Base -> Upstream Target | Planned Deliverables |
+### Stage 4 — Group B: Implemented Branches Stacked on `feature/pep621-upstream-pr` (`4a594c8`)
+| Stage | Pushed Branch & Commit (`KmoM88/colcon-core`) | Base & Fork Compare | Delivered & Verified Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Stage 4A** | `feature/python-project-test-task` | `origin/feature/pep621-upstream-pr` (`4a594c8`) -> `colcon:cottsay/pep621` (then `master`) | Add `PythonProjectTestTask(PythonTestTask)` (`add_arguments` no-op to avoid duplicate `--python-testing` CLI option), register `python.project` under `colcon_core.task.test`, and populate static PEP 621 / PEP 735 `get_python_setup_options` in `PEP621PackageAugmentation`. |
-| **Stage 4C** | `feature/pep621-dynamic-metadata` | `origin/feature/pep621-upstream-pr` (`4a594c8`) -> `colcon:cottsay/pep621` (then `master`) | Wire `PEP621PackageAugmentation` to `colcon_core.python_project.metadata.load_and_cache_metadata()` when `project.dynamic` declares `version`, `dependencies`, `optional-dependencies`, `maintainers`, or `authors`, with PEP 517 `build_wheel` fallback when optional `prepare_metadata_for_build_wheel` is absent. |
+| **Stage 4A** | [`feature/python-project-test-task`](https://github.com/KmoM88/colcon-core/tree/feature/python-project-test-task) (`d4b93bc`) | `origin/feature/pep621-upstream-pr` (`4a594c8`) — [Compare](https://github.com/KmoM88/colcon-core/compare/feature/pep621-upstream-pr...feature/python-project-test-task) | `PythonProjectTestTask(PythonTestTask)` (`add_arguments` no-op to avoid duplicate `--python-testing` CLI option), `python.project` registration under `colcon_core.task.test`, and static PEP 621 / PEP 735 `get_python_setup_options` in `PEP621PackageAugmentation` (`256 passed, 5 skipped` locally; 44/44 fork CI green). |
+| **Stage 4C** | [`feature/pep621-dynamic-metadata`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata) (`49fcded`) | `origin/feature/pep621-upstream-pr` (`4a594c8`) — [Compare](https://github.com/KmoM88/colcon-core/compare/feature/pep621-upstream-pr...feature/pep621-dynamic-metadata) | `PEP621PackageAugmentation` wired to `colcon_core.python_project.metadata.load_and_cache_metadata()` when `project.dynamic` declares `version`, `dependencies`, `optional-dependencies`, `maintainers`, or `authors`, with PEP 517 `build_wheel` fallback when optional `prepare_metadata_for_build_wheel` is absent (`257 passed, 5 skipped` locally; 44/44 fork CI green). |
 
-### Stage 5: Ecosystem Transition & Deprecation
-- [ ] **Deprecate `colcon/colcon-python-project`**: Once Stages 1–3 merge upstream, publish a deprecation notice pointing to native `colcon-core` / `colcon-ros` support and close prototype PR #1.
+### Stage 5: Ecosystem Transition & Deprecation (Planned Post-Merge)
+- [ ] **Deprecate `colcon/colcon-python-project`**: Once Stages 1–4 merge upstream, publish a deprecation notice pointing to native `colcon-core` / `colcon-ros` support and close prototype PR #1.
 
 ---
 
