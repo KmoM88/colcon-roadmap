@@ -44,7 +44,8 @@ This roadmap tracks the delivery of modern Python packaging standards (PEP 517/5
 | **Final Phase PoC**: [`poc/`](poc/README.md) & [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) | `KmoM88/colcon-roadmap` + `KmoM88/{demos,examples,teleop_twist_keyboard}` | **Implemented & Verified ([Run 40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655))** | Dockerized & GitHub Actions ROS 2 Jazzy 6-stage showcase across active `ros2/*` packages migrated to pure `pyproject.toml` (`hatchling`, `flit_core`, `setuptools.build_meta`). |
 
 > [!IMPORTANT]
-> The full technical audit of 10 architectural pitfalls and their staged PR remediation matrix is maintained in **[docs/plans/pitfalls_and_remediation_plan.md](docs/plans/pitfalls_and_remediation_plan.md)**.
+> * The master **PR, Branch, Feature & Release Plan** (with per-stage leaf specifications and historic PR reference) is maintained in **[docs/release_plan/README.md](docs/release_plan/README.md)** and **[docs/release_plan/historic_prs_reference.md](docs/release_plan/historic_prs_reference.md)**.
+> * The full technical audit of 10 architectural pitfalls and their staged PR remediation matrix is maintained in **[docs/plans/pitfalls_and_remediation_plan.md](docs/plans/pitfalls_and_remediation_plan.md)**.
 
 ### Feature 1: PEP 621 Package Identification & Augmentation [COMPLETED — STAGE 1]
 * **Status**: Submitted in [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) (`4a594c8`).

@@ -21,9 +21,9 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
   - **Group B — 4C ([`feature/pep621-dynamic-metadata`](https://github.com/KmoM88/colcon-core/tree/feature/pep621-dynamic-metadata) @ `49fcded`, off `feature/pep621-upstream-pr` `4a594c8`)**: Dynamic PEP 621 metadata resolution via `load_and_cache_metadata` with PEP 517 `build_wheel` fallback when optional `prepare_metadata_for_build_wheel` is absent.
 * **Final Phase PoC: Dockerized & GitHub Actions ROS 2 Jazzy Multi-Backend Showcase ([`poc/`](poc/README.md))** -> **IMPLEMENTED & VERIFIED** (Builds, runs via `ros2 run` with live DDS pub/sub, tests `--symlink-install` PEP 660 editable symlinks, and executes `colcon test` across official `ros2/*` packages migrated to pure `pyproject.toml` on branch `poc/pep621-ament-python` using `hatchling`, `flit_core`, and `setuptools.build_meta`; verified locally and on GitHub Actions via [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) in run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655)).
 
-### Planned Post-Merge Stage (Stage 5)
+### Planned Post-Merge Stage (Stage 5 — Planned Only, No Implementation)
 
-* **Stage 5: Prototype Deprecation (`colcon-python-project`)** -> **PLANNED POST-MERGE** (Archive `colcon/colcon-python-project` and close prototype PR #1 once Stages 1–4 land upstream).
+* **Stage 5: Prototype Deprecation (`colcon-python-project`)** -> **PLANNED ONLY — NO IMPLEMENTATION** (Post-release plan in [docs/release_plan/stages/stage5_colcon_python_project_deprecation.md](docs/release_plan/stages/stage5_colcon_python_project_deprecation.md) to archive `colcon/colcon-python-project` and close prototype PR #1 only after Stages 1–4 merge and ship upstream).
 
 ---
 
@@ -31,12 +31,14 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 
 | Document | Purpose |
 | :--- | :--- |
-| **[Current Status](current_status.md)** | Technical analysis of merged PRs (#728, #732, #741), open/draft PRs (#750, #751, #171), PoC & CI verification metrics, and remaining roadmap. |
-| **[Action Plan & Next Steps](action_plan_next_steps.md)** | Step-by-step execution record for Phases 1–5 + ROS 2 Jazzy PoC, and implementation plan for Stages 4–5 (Phases 6–7). |
-| **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, delivered feature branches, and Stage 4 Group A / Group B branch queue. |
-| **[Stage 4 Branch Implementation Plan](docs/plans/stage4_branch_plan.md)** | Branch-by-branch design, base commits, file changes, edge cases, and test plans for Stage 4 Group A (`master`) and Stage 4 Group B (`#750`). |
+| **[PR, Branch, Feature & Release Plan](docs/release_plan/README.md)** | **Master Hub**: End-to-end PR & release wave plan linking every feature branch (decisions, solution, validation) and per-stage leaf specifications under [`docs/release_plan/stages/`](docs/release_plan/README.md). |
+| **[Historic PRs & Prototype Reference](docs/release_plan/historic_prs_reference.md)** | Reference summary of `colcon-python-project#1`, issue `#736`, merged foundations (`#728`, `#732`, `#741`), and upstream `cottsay/pep621` (`80acf29`). |
+| **[Current Status](current_status.md)** | Technical analysis of merged PRs (#728, #732, #741), open/draft PRs (#750, #751, #171), Stage 4 fork CI metrics, PoC verification, and remaining roadmap. |
+| **[Action Plan & Next Steps](action_plan_next_steps.md)** | Step-by-step execution record for Phases 1–6 + ROS 2 Jazzy PoC, and planned-only Stage 5 deprecation gate (Phase 7). |
+| **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, delivered feature branches, and Stage 4 Group A / Group B summary. |
+| **[Stage 4 Branch Implementation Record](docs/plans/stage4_branch_plan.md)** | Branch-by-branch design, commit SHAs, file changes, edge cases, and fork CI results for Stage 4 Group A (`master`) and Stage 4 Group B (`#750`). |
 | **[Pitfalls & Remediation Plan](docs/plans/pitfalls_and_remediation_plan.md)** | Audit of 10 architectural pitfalls (`ros2 run`, `colcon test`, data-files parity, `ScriptMaker` cache, etc.) and staged PR remediation matrix. |
-| **[Implemented Results Summary (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Published results-only summary of merged foundations, delivered PRs, and ROS 2 Jazzy PoC validation ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
+| **[Implemented Results Summary (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Published results-only summary of merged foundations, delivered PRs, Stage 4 fork CI validation, and ROS 2 Jazzy PoC ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
 | **[Dockerized ROS 2 Jazzy PoC](poc/README.md)** | Reproducible 6-stage Docker & GitHub Actions PoC building and running official `ros2/*` packages (`demo_nodes_py`, `examples_rclpy_minimal_*`, `teleop_twist_keyboard`) with pure `pyproject.toml`. |
 | **[Migration Instructions](migration_instructions.md)** | Transition strategy from `colcon-python-project` to native `colcon-core`. |
 
