@@ -1,0 +1,122 @@
+name: ROS 2 Jazzy PEP 621 / PEP 660 Proof of Concept
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "ROS 2 target package set to build, run, and test"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - demo_nodes_py
+          - examples_rclpy
+          - teleop_twist_keyboard
+      poc_repos_base:
+        description: "Base Git URL for migrated active ros2/* PoC forks"
+        required: true
+        default: "https://github.com/KmoM88"
+        type: string
+      poc_branch:
+        description: "Branch containing pure PEP 621 pyproject.toml migrations"
+        required: true
+        default: "poc/pep621-ament-python"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ros2-jazzy-poc:
+    name: "ROS 2 Jazzy PoC (${{ inputs.target }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout colcon-roadmap
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Checkout required colcon submodules over HTTPS
+        run: |
+          set -euo pipefail
+          git submodule init \
+            submodules/kmom88-colcon-core \
+            submodules/colcon-library-path \
+            submodules/colcon-test-result \
+            submodules/colcon-cmake \
+            submodules/colcon-python-setup-py \
+            submodules/colcon-package-selection \
+            submodules/colcon-package-information \
+            submodules/colcon-recursive-crawl \
+            submodules/colcon-output \
+            submodules/colcon-parallel-executor \
+            submodules/colcon-defaults \
+            submodules/colcon-metadata \
+            submodules/colcon-bash \
+            submodules/colcon-ros
+
+          # Rewrite SSH submodule URLs from .gitmodules to HTTPS for runner access,
+          # and point colcon-ros to KmoM88/colcon-ros where commit 359ab5c (PR #171) lives.
+          for key in $(git config --get-regexp '^submodule\..*\.url$' | awk '{print $1}'); do
+            raw_url="$(git config --get "${key}")"
+            https_url="${raw_url/#git@github.com:/https://github.com/}"
+            git config "${key}" "${https_url}"
+          done
+          git config submodule.submodules/colcon-ros.url "https://github.com/KmoM88/colcon-ros.git"
+
+          git submodule update \
+            submodules/kmom88-colcon-core \
+            submodules/colcon-library-path \
+            submodules/colcon-test-result \
+            submodules/colcon-cmake \
+            submodules/colcon-python-setup-py \
+            submodules/colcon-package-selection \
+            submodules/colcon-package-information \
+            submodules/colcon-recursive-crawl \
+            submodules/colcon-output \
+            submodules/colcon-parallel-executor \
+            submodules/colcon-defaults \
+            submodules/colcon-metadata \
+            submodules/colcon-bash \
+            submodules/colcon-ros
+
+      - name: Build Docker image and execute 6-stage ROS 2 PoC
+        env:
+          POC_REPOS_BASE: ${{ inputs.poc_repos_base }}
+          POC_BRANCH: ${{ inputs.poc_branch }}
+        run: |
+          set -euo pipefail
+          ./poc/run_poc.sh --target "${{ inputs.target }}" 2>&1 | tee "${RUNNER_TEMP}/poc_execution.log"
+
+      - name: Publish stage summary to GitHub Actions Run Summary
+        if: always()
+        run: |
+          {
+            echo "## ROS 2 Jazzy PEP 621 / PEP 660 Proof of Concept"
+            echo ""
+            echo "- **Target**: \`${{ inputs.target }}\`"
+            echo "- **PoC Forks Base**: \`${{ inputs.poc_repos_base }}\`"
+            echo "- **Branch**: \`${{ inputs.poc_branch }}\`"
+            echo ""
+            if [[ -f "${RUNNER_TEMP}/poc_execution.log" ]]; then
+              echo "### Stage-by-Stage Execution Log"
+              echo ""
+              echo "<details open><summary>PoC Console Output</summary>"
+              echo ""
+              echo '```text'
+              grep -Ev '^#[0-9]+ ' "${RUNNER_TEMP}/poc_execution.log" || cat "${RUNNER_TEMP}/poc_execution.log"
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload PoC execution log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ros2-jazzy-pep621-poc-${{ inputs.target }}
+          path: ${{ runner.temp }}/poc_execution.log

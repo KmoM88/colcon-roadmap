@@ -59,6 +59,13 @@ Reuse an already-built Docker image without rebuilding:
 ./poc/run_poc.sh --skip-image-build --target all
 ```
 
+### Run Manually on GitHub Actions
+
+You can also run the PoC on demand in GitHub Actions without a local Docker installation via [`.github/workflows/ros2_pep621_poc.yml`](../.github/workflows/ros2_pep621_poc.yml):
+
+1. Open the repository **Actions** tab on GitHub and select **ROS 2 Jazzy PEP 621 / PEP 660 Proof of Concept**, then click **Run workflow** and choose `all`, `demo_nodes_py`, `examples_rclpy`, or `teleop_twist_keyboard` (or run `gh workflow run ros2_pep621_poc.yml -f target=all` from the CLI).
+2. View the live stage-by-stage logs directly on the workflow **Summary** page and download the `ros2-jazzy-pep621-poc-<target>` log artifact.
+
 ---
 
 ## 4. Six-Stage Verification Pipeline
