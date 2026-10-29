@@ -1,104 +1,88 @@
-# Current Status of PEP 517/518/621/660 Adoption in colcon-core
+# Current Status of PEP 517/518/621/660 Adoption in colcon-core & colcon-ros
 
-This document details the exact state of modern Python packaging standards (PEP 517/518/621/660) in `colcon-core`, incorporating the analysis of merged pull requests and upstream branches in active development.
+This document records the current implementation and verification state of modern Python packaging standards (PEP 517/518/621/660) across `colcon-core` and `colcon-ros`, along with the remaining single-concern follow-up queue.
 
 ---
 
 ## 1. Executive Summary
 
-The modernization of Python builds in `colcon-core` has made substantial upstream progress:
-* **PR #741 (Closed & Merged)**: The in-process wheel installation and uninstallation engine was officially merged into `colcon-core` (master, releases 0.21.2 / 0.21.3).
-* **Branch `cottsay/pep621` (Upstream by Scott Logan)**: Implements native PEP 621 package identification, dependency augmentation, and the Python project build task (`PythonProjectBuildTask`), connecting directly to the `install_wheel` engine from PR #741.
-* **PR #750 (Submitted & Under Review)**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) opened from `KmoM88:feature/pep621-upstream-pr` targeting `colcon/colcon-core:cottsay/pep621`. Fixes async tests via `run_until_complete`, adds real multi-backend integration tests (`flit_core`, `hatchling`), and passes flake8 and spell-check standards (commit `4a594c8`).
+* **Merged Foundations (`colcon-core` `v0.21.2` / `v0.21.3`)**: `InstalledDistribution` (PR #728), `AsyncHookCaller` & `load_and_cache_spec` (PR #732), and in-process `install_wheel` / `remove_distributions` (PR #741) are merged on `colcon/colcon-core:master`.
+* **Stage 1 — PR #750 (Submitted & Under Review)**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) (`KmoM88:feature/pep621-upstream-pr` at `4a594c8` -> `colcon:cottsay/pep621`) aligns async unit tests with `run_until_complete` and adds real multi-backend (`flit_core`, `hatchling`) integration tests.
+* **Stage 2 — Draft PR #751 (46/46 CI Checks Green)**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (`KmoM88:feature/pep660-editable-data-files` at `463df5f` -> `colcon:master`) adds `script_dir_override` (with relative `install_base` `$base` fix), backend-scoped editable data-file symlinking (`setuptools.build_meta*` globs + `hatchling.*` `shared-data`), deduplicated `.dist-info/RECORD` updates, and cache-isolated unit/integration tests (`256 passed, 5 skipped` locally; 46/46 GitHub Actions checks passing).
+* **Stage 3 — Draft PR #171 (16/16 `pytest` Checks Green)**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (`KmoM88:feature/ros-ament-python-project` at `359ab5c` -> `colcon:master`) enables ROS 2 `ament_python` packages using `pyproject.toml` without `setup.py`, routing `[project.scripts]` to `lib/<pkg>/` for `ros2 run`, passing flat `additional_hooks`, installing/recording `ament_index` and `package.xml` post-wheel for idempotent rebuilds, and augmenting test metadata in `RosAmentPythonPackageAugmentation` for `colcon test`.
+* **Final Phase PoC — Dockerized ROS 2 Jazzy Multi-Backend Validation ([`poc/`](poc/README.md))**: Self-contained Docker image (`ros:jazzy-ros-core` + modernized `colcon-core` / `colcon-ros`) executing a 6-stage verification pipeline against active `ros2/*` packages migrated to pure `pyproject.toml` (`demo_nodes_py` on `hatchling`, `examples_rclpy_minimal_publisher`/`subscriber` on `flit_core`, and `teleop_twist_keyboard` on `setuptools.build_meta`), verifying `ros2 pkg executables`, live DDS `ros2 run` message exchange, PEP 660 `--symlink-install` live `share/` data-file edits, and `colcon test`.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                              colcon-core                               │
-│                                                                        │
-│  [MERGED] PR #732: AsyncHookCaller (backend subprocess IPC)            │
-│  [MERGED] PR #728: InstalledDistribution (installed file discovery)   │
-│  [MERGED] PR #741: Wheel Engine (`install_wheel` & uninstallation)     │
-│  ────────────────────────────────────────────────────────────────────  │
-│  [UPSTREAM BASE] Branch `cottsay/pep621` (Scott K Logan)               │
-│  ├─ PEP621PackageIdentification (detects `pyproject.toml` [project])   │
-│  ├─ PEP621PackageAugmentation (maps build/run/test dependencies)       │
-│  ├─ PythonProjectBuildTask (builds wheel via hook -> `install_wheel`)  │
-│  └─ PEP 610 Direct URL recording for editable installs (`build_editable)│
-│  ────────────────────────────────────────────────────────────────────  │
-│  [OPEN PR] colcon/colcon-core#750 (Target: `cottsay/pep621`)           │
-│  ├─ Async test runner aligned to `run_until_complete` (no plugin dep)  │
-│  ├─ Multi-backend integration tests (flit_core, hatchling scripts)     │
-│  └─ Flake8 + spell-check passed, 100% test suite pass rate (27/27)     │
-└────────────────────────────────────────────────────────────────────────┘
+```text
++--------------------------------------------------------------------------+
+|                               colcon-core                                |
+|                                                                          |
+|  [MERGED] PR #732: AsyncHookCaller & pyproject.toml spec loader          |
+|  [MERGED] PR #728: InstalledDistribution (installed file discovery)      |
+|  [MERGED] PR #741: Wheel Engine (install_wheel & remove_distributions)   |
+|  ----------------------------------------------------------------------  |
+|  [STAGE 1 - OPEN PR] colcon/colcon-core#750 (Commit 4a594c8)             |
+|  +- Target: cottsay/pep621 (Identification, Augmentation, BuildTask)     |
+|  +- Async test runner aligned to run_until_complete                      |
+|  +- Multi-backend integration suite (flit_core, hatchling)               |
+|  ----------------------------------------------------------------------  |
+|  [STAGE 2 - DRAFT PR] colcon/colcon-core#751 (Commit 463df5f)            |
+|  +- script_dir_override API & relative install_base $base fix            |
+|  +- Backend-scoped editable data files (setuptools globs, hatchling)     |
+|  +- Deduplicated RECORD updates; 46/46 GitHub Actions CI checks green    |
++--------------------------------------------------------------------------+
+                                     |
+                                     v
++--------------------------------------------------------------------------+
+|                                colcon-ros                                |
+|                                                                          |
+|  [STAGE 3 - DRAFT PR] colcon/colcon-ros#171 (Commit 359ab5c)             |
+|  +- AmentPythonBuildTask delegates pyproject.toml-only builds            |
+|  +- script_dir_override = Path('lib') / pkg.name (ros2 run layout)       |
+|  +- Flat additional_hooks + post-wheel ament_index & package.xml RECORD  |
+|  +- RosAmentPythonPackageAugmentation enables pytest in colcon test      |
+|  +- 16/16 pytest --cov --cov-branch passing + 4/4 mock scenarios green   |
++--------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. In-Depth Analysis: Merged PR #741 (Wheel Installation & Uninstallation)
+## 2. Merged Foundations Summary (`colcon-core` PRs #728, #732, #741)
 
-* **PR**: [colcon/colcon-core#741](https://github.com/colcon/colcon-core/pull/741)
-* **Author**: Federico Rossi (`KmoM88`)
-* **Reviewer / Approver**: Scott K Logan (`cottsay`)
-* **Merged at**: 2026-09-05 (Commit `845927c`, released in `v0.21.2` / `v0.21.3`)
-* **Target File**: `colcon_core/python_project/wheel.py`
-
-### Key Capabilities Introduced
-1. **Metadata-Driven Removal (`remove_distributions`)**:
-   - Queries `InstalledDistribution.discover` on disk (PR #728) to detect existing files of a distribution.
-   - Deletes files, unlinks `.egg-link` files, and prunes empty parent directories up to `install_base`.
-   - Windows-safe: Traps file lock errors (`PermissionError`, `OSError`) to avoid crashing active processes.
-2. **In-Process Wheel Extractor (`install_wheel`)**:
-   - Reads `.whl` ZIP archives without spawning external `pip` subprocesses.
-   - Accurately maps library paths (`purelib` vs `platlib`) and translates `.data/` subdirectories (e.g. `share/`).
-   - Generates executable script wrappers in `bin/` using `distlib.scripts.ScriptMaker`.
-   - Writes PEP 376 `INSTALLER` ("colcon-core") and finalizes `RECORD` with SHA256 checksums and file sizes.
-3. **Unit Tests**:
-   - `test/test_install_wheel.py` (5 tests) & `test/test_remove_wheel.py` (4 tests) with 100% pass rate.
+* **PR #732 (`AsyncHookCaller`)**: Runs PEP 517 backend hooks in subprocesses via OS pipes and pickle serialization, exposes `HookCallerDecoratorExtensionPoint`, and provides `colcon_core.python_project.spec.load_and_cache_spec`.
+* **PR #728 (`InstalledDistribution`)**: Discovers installed `.dist-info` / `.egg-info` distributions, entry points, top-level modules, and `.pyc` files under an `install_base`.
+* **PR #741 (`wheel.py`, Commit `845927c`)**:
+  - `remove_distributions`: Queries `InstalledDistribution.discover`, unlinks installed files, and removes empty parent directories up to `install_base`.
+  - `install_wheel`: Extracts `.whl` archives in-process, maps `.data/` subdirectories (`share/`, etc.), generates console script wrappers via `distlib.scripts.ScriptMaker` (honoring `script_dir_override`), and writes PEP 376 `INSTALLER` and `RECORD`.
 
 ---
 
-## 3. In-Depth Analysis: Scott Logan's Standard Python Builds (`cottsay/pep621`)
+## 3. Delivered Pull Requests Breakdown (Stages 1–3)
 
-* **Upstream Branch**: `origin/cottsay/pep621` (on `colcon/colcon-core`)
-* **Latest Commit**: `80acf29` ("WIP: Add support for PEP 621 projects")
-* **Author**: Scott K Logan (`cottsay`)
+### A. Stage 1 (`colcon/colcon-core#750` — Commit `4a594c8`)
+* **Base**: `colcon/colcon-core:cottsay/pep621` (`80acf29` by Scott K Logan)
+* **Head**: `KmoM88/colcon-core:feature/pep621-upstream-pr` (`4a594c8`)
+* **Delivered**:
+  - Harmonized `test/test_task_python_project_build.py` to use `run_until_complete` instead of `@pytest.mark.asyncio`.
+  - Added `test/test_integration_pep621.py` covering `flit_core.buildapi` and `hatchling.build` standard builds, `[project.scripts]` wrappers in `bin/`, idempotent rebuilds, and PEP 660 `build_editable` with PEP 610 `direct_url.json`.
 
-Scott Logan implemented the missing pipeline pieces to connect the hook caller (PR #732) and wheel installer (PR #741):
+### B. Stage 2 (`colcon/colcon-core#751` — Commit `463df5f`, 46/46 CI Green)
+* **Base**: `colcon/colcon-core:master`
+* **Head**: `KmoM88/colcon-core:feature/pep660-editable-data-files` (`463df5f`)
+* **Delivered**:
+  - Extended `PythonProjectBuildTask.build(*, additional_hooks=None, script_dir_override=None)` and fixed `$base` expansion when `args.install_base` is relative.
+  - Scoped `_get_data_files_mapping(pkg, backend_name)` strictly to `setuptools.build_meta*` (with glob support for `setup.cfg` and `[tool.setuptools.data-files]`) and `hatchling.*` (file and directory `[tool.hatch.build.targets.wheel.shared-data]`).
+  - Deduplicated `.dist-info/RECORD` updates via `record_map`.
+  - Added `test_get_data_files_mapping_by_backend`, `test_build_task_script_override_and_record_update`, `test_integration_symlink_install_data_files`, and `test_integration_setuptools_data_files_and_script_override` (with `setuptools < 70.1` `wheel` guard and entry-point cache isolation).
+  - Verified `256 passed, 5 skipped` locally and **46/46 GitHub Actions CI checks green**.
 
-### A. Package Identification (`colcon_core/package_identification/pep621.py`)
-* Class: `PEP621PackageIdentification` (Priority = 90).
-* Checks for `pyproject.toml` using `load_and_cache_spec(desc)`.
-* If `[project].name` is defined, identifies the package type as `python.project`.
-* Priority is deliberately lower than legacy `setup.cfg`/`setup.py` (priority 100), ensuring backward compatibility.
-
-### B. Dependency Augmentation (`colcon_core/package_augmentation/pep621.py`)
-* Class: `PEP621PackageAugmentation`.
-* Maps dependencies directly from `pyproject.toml`:
-  - `build-system.requires` $\rightarrow$ `build` dependencies.
-  - `project.dependencies` $\rightarrow$ `run` dependencies.
-  - `project.optional-dependencies.test` $\rightarrow$ `test` dependencies.
-* Extracts metadata: `version`, `maintainers`, and `authors`.
-
-### C. Build Task Execution (`colcon_core/task/python_project/build.py`)
-* Class: `PythonProjectBuildTask` (registered for package type `python.project`).
-* Reads `setup.cfg` if present for script-dir overrides.
-* Resolves command environment via `get_command_environment('python_project', ...)`.
-* Calls backend hook:
-  - Default: `build_wheel` $\rightarrow$ outputs `.whl` into `<build_base>/wheel`.
-  - With `--symlink-install`: checks if backend supports `build_editable`. If not, logs a warning and falls back to regular `build_wheel`.
-* Directly calls `install_wheel(wheel_path, args.install_base, script_dir_override=...)` from PR #741.
-* Generates colcon environment hooks and scripts, updating the `RECORD` index.
-* For editable installs, writes PEP 610 `direct_url.json` (`{"dir_info": {"editable": true}}`) and appends it to `RECORD`.
-
-### D. Testing & Quality Verification Assessment
-* **Identification & Augmentation Tests**:
-  `test_package_identification_pep621.py` (2 tests) and `test_package_augmentation_pep621.py` (4 tests) pass cleanly.
-* **Build Task Tests (`test_task_python_project_build.py`)**:
-  Previously marked with `@pytest.mark.asyncio`, which caused failures in standard `colcon-core` environments. Replaced with `from .run_until_complete import run_until_complete` in fork commit `816a0d3`. All 3 build task tests now pass cleanly.
-* **End-to-End Integration Tests (`test_integration_pep621.py`)**:
-  Added comprehensive tests with real backends (`flit_core.buildapi` and `hatchling.build`). Validated pure PEP 621 packages, console script wrappers in `bin/` with executable bits, clean idempotent rebuilds via `remove_distributions`, and editable `--symlink-install` via `build_editable` with PEP 610 `direct_url.json`. (Branch `feature/pep621-integration-tests`, commit `c40901a`).
-* **Overall Test Suite**:
-  All 23 related unit and integration tests pass at 100% (23 passed in 0.74s). Code style and import order validated with `flake8` with 0 warnings.
+### C. Stage 3 (`colcon/colcon-ros#171` — Commit `359ab5c`, 16/16 `pytest` Green)
+* **Base**: `colcon/colcon-ros:master`
+* **Head**: `KmoM88/colcon-ros:feature/ros-ament-python-project` (`359ab5c`)
+* **Delivered**:
+  - Updated `AmentPythonBuildTask` (`colcon_ros/task/ament_python/build.py`) to pass `script_dir_override=Path('lib') / self.context.pkg.name` (`ros2 run` discovery path) and flat `additional_hooks=additional_hooks` to `PythonProjectBuildTask.build()`.
+  - Moved `share/ament_index/resource_index/packages/<pkg>` and `share/<pkg>/package.xml` installation *after* `PythonProjectBuildTask.build()` so `remove_distributions` does not delete freshly written files on rebuilds and wheel-provided files are preserved, recording added paths in `.dist-info/RECORD`.
+  - Updated `RosAmentPythonPackageAugmentation` (`colcon_ros/package_augmentation/ros_ament_python.py`) to extract `[project.dependencies]`, `[project.optional-dependencies]`, and PEP 735 `[dependency-groups]` test dependencies when `setup.py` is absent so `AmentPythonTestTask` matches `pytest` during `colcon test`.
+  - Verified `16 passed` under `pytest --cov --cov-branch` (unit tests, `flit_core` integration test, `flake8`, `scspell3k`, copyright) and `4/4` end-to-end mock scenarios in `scripts/test_mock_packages.py`.
 
 ---
 
@@ -106,31 +90,23 @@ Scott Logan implemented the missing pipeline pieces to connect the hook caller (
 
 | Component | Status | Location / PR | Notes |
 | :--- | :--- | :--- | :--- |
-| **Backend Hook IPC** | **Merged** | PR #732 | `AsyncHookCaller` with pipes & pickle |
-| **Installed File Discovery** | **Merged** | PR #728 | `InstalledDistribution` |
-| **Wheel Uninstallation** | **Merged** | PR #741 | `remove_distributions` |
-| **Wheel Installation** | **Merged** | PR #741 | `install_wheel`, RECORD writer, entry points |
-| **PEP 621 Identification** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Priority 90, assigns `python.project` |
-| **PEP 621 Augmentation** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Maps `[project.dependencies]` |
-| **Python Project Build Task** | **Verified** | Fork commit `816a0d3` / `cottsay/pep621` | Calls `install_wheel` & writes hooks, async tests fixed |
-| **PEP 660 Editable Hooks** | **Verified** | Fork commit `c40901a` / `colcon-core` | Dispatches `build_editable` + PEP 610 JSON |
-| **ROS Data Files & Script Override**| **Draft PR #751 (46/46 CI)**| [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) | Backend-scoped `share/` symlinking, unique `RECORD` updates & `script_dir_override` (`463df5f`) |
-| **ROS `ament_python` PEP 621**| **Draft PR #171 (16/16 pytest)**| [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) | `lib/<pkg>` script override, flat hooks, `RECORD`-tracked index/manifest & `colcon test` augmentation (`359ab5c`) |
+| **Backend Hook IPC & Spec Loader** | **Merged** | `colcon-core#732` | `AsyncHookCaller`, `HookCallerDecoratorExtensionPoint`, `load_and_cache_spec` |
+| **Installed File Discovery** | **Merged** | `colcon-core#728` | `InstalledDistribution` |
+| **Wheel Install & Uninstall Engine** | **Merged** | `colcon-core#741` (`845927c`) | `install_wheel`, `remove_distributions` |
+| **PEP 621 Identification, Augmentation & Build** | **Submitted PR #750** | [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) (`4a594c8`) | Targets `cottsay/pep621`; `run_until_complete` + multi-backend integration tests |
+| **Editable Data Files & `script_dir_override`** | **Draft PR #751 (46/46 CI)** | [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (`463df5f`) | Backend-scoped `share/` symlinking, deduplicated `RECORD` & relative `$base` fix |
+| **ROS 2 `ament_python` `pyproject.toml` Build & Test** | **Draft PR #171 (16/16 pytest)** | [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (`359ab5c`) | `lib/<pkg>` script override, flat hooks, `RECORD`-tracked index/manifest & `colcon test` augmentation |
+| **`SetuptoolsDecorator` Scratch Isolation** | **Planned (Stage 4B)** | `colcon-core` (targets `master`) | Redirects `--build-base` / `--egg-base` out of source tree |
+| **Wheel `script_dir.mkdir` & Windows Symlink Fallback** | **Planned (Stage 4D)** | `colcon-core` (targets `master`) | Fixes cached `ScriptMaker` rebuild error + Windows `os.symlink` copy fallback |
+| **`python.project` `colcon test` Task** | **Planned (Stage 4A)** | `colcon-core` (stacked on `#750`) | Registers `python.project` under `colcon_core.task.test` |
+| **Dynamic Metadata Hook Wiring** | **Planned (Stage 4C)** | `colcon-core` (stacked on `#750`) | Connects `PEP621PackageAugmentation` to `load_and_cache_metadata` |
 
 ---
 
-## 5. Next Steps & Feature Branches Strategy
+## 5. Remaining Follow-Up Queue (Stages 4–5)
 
-To close the development of standard Python builds across the ecosystem, work is structured across sequential feature branches:
-
-1. **`feature/pep621-upstream-pr` (`colcon-core`) [SUBMITTED as PR #750]**:
-   - Submitted as [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) targeting `cottsay/pep621`.
-   - Flake8 and spell-check verified and passing (Commit `4a594c8`).
-   - Awaiting review/merge into `cottsay/pep621` or `master`.
-2. **`feature/pep660-editable-data-files` (`colcon-core`) [DRAFT PR #751 UPDATED — 46/46 CI GREEN]**:
-   - Submitted as [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751).
-   - Implements `script_dir_override`, backend-scoped data-file symlinking (Setuptools globs + Hatchling `shared-data`), in-place `RECORD` updates, and entry-point cache isolation across full `pytest` runs (`256 passed, 5 skipped`, 46/46 GitHub Actions checks passing on commit `463df5f`).
-3. **`feature/ros-ament-python-project` (`colcon-ros`) [DRAFT PR #171 OPENED]**:
-   - Submitted as [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171).
-   - Adapted `AmentPythonBuildTask` in `colcon-ros` to build modern `ament_python` packages declaring only `pyproject.toml` (Commit `fc03806`).
-
+1. **Stage 4B (`colcon-core:master`)**: Port `SetuptoolsDecorator` so `setuptools.build_meta` builds never create untracked `.egg-info/` directories in package source trees.
+2. **Stage 4D (`colcon-core:master`)**: Add `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` for cached `ScriptMaker` instances after `remove_distributions()`, and add graceful file-copy fallback in `colcon_core.task.install()` when Windows lacks `SeCreateSymbolicLinkPrivilege`.
+3. **Stage 4A (stacked on `cottsay/pep621` / `#750`)**: Register `python.project` under `colcon_core.task.test` for pure non-ROS PEP 621 `colcon test` execution.
+4. **Stage 4C (stacked on `cottsay/pep621` / `#750`)**: Wire `PEP621PackageAugmentation` to `load_and_cache_metadata` when `project.dynamic` fields are present.
+5. **Stage 5 (`colcon-python-project`)**: Deprecate `colcon/colcon-python-project` and close prototype PR #1 once Stages 1–3 land upstream.

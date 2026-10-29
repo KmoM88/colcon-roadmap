@@ -1,208 +1,162 @@
 # Architectural Pitfalls & Remediation Plan: Native Python Standards in colcon & ROS 2
 
-This document provides a comprehensive technical audit of the current Python packaging standards (PEP 517, 518, 621, 660) implementation across `colcon-core` and `colcon-ros`. It defines concrete remediation designs and a phased pull request (PR) staging strategy tailored to upstream maintainer practices.
+This document provides the technical audit of the Python packaging standards (PEP 517, 518, 621, 660) implementation across `colcon-core` and `colcon-ros`, records the remediations completed in Stages 1–3, and defines the remaining single-concern follow-up pull requests for Stages 4–5.
 
 ---
 
 ## 1. Executive Summary & Audit Findings
 
-While foundational milestones have been merged upstream (`AsyncHookCaller` in PR #732, `InstalledDistribution` in PR #728, and `install_wheel`/`remove_distributions` in PR #741), rigorous trace analysis of the open and draft PRs (`colcon-core#750`, `colcon-core#751`, `colcon-ros#171`) reveals **9 critical architectural pitfalls and edge-case gaps**:
+Building on the merged upstream foundations (`AsyncHookCaller` in PR #732, `InstalledDistribution` in PR #728, and `install_wheel` / `remove_distributions` in PR #741), trace analysis and integration testing across `colcon-core#750`, `colcon-core#751`, and `colcon-ros#171` identified **10 architectural pitfalls and edge-case gaps**:
 
-| # | Severity | Category | Pitfall Description | Root Cause / Affected Files |
+| # | Severity | Category | Pitfall Description | Status & Stage |
 | :- | :--- | :--- | :--- | :--- |
-| **1** | 🚨 **Critical** | ROS 2 CLI | `ros2 run` cannot find executables built from `pyproject.toml` | Scripts installed into `bin/` instead of `lib/<pkg>/`; `AmentPythonBuildTask` does not pass `script_dir_override`. |
-| **2** | 🚨 **Critical** | Test Suite | `colcon test` completely skips testing for modern packages | No `colcon_core.task.test` registered for `python.project`; `RosAmentPythonPackageAugmentation` skips metadata setup when `setup.py` is absent. |
-| **3** | 🚨 **Critical** | Packaging | Data files parity breakage between standard build & `--symlink-install` | PR #751 hardcodes backend parsers only during `--symlink-install`; releases with `flit_core` omit data files entirely; duplicate `RECORD` lines. |
-| **4** | ⚠️ **High** | Identification | Priority race between `colcon-python-setup-py` and `PEP621PackageIdentification` | Both extensions set `PRIORITY = 90`, making identification non-deterministic when both `setup.py` and `pyproject.toml` exist. |
-| **5** | ⚠️ **High** | Environment | Missing build isolation & `rosdep` blind spot for `build-system.requires` | Colcon does not isolate build environments; `rosdep` only parses `package.xml`, ignoring `[build-system].requires`. |
-| **6** | ⚠️ **High** | Metadata | Double-manifest sync hazard (`package.xml` vs `pyproject.toml`) | Runtime tools (`importlib.metadata`) inspect `.dist-info/METADATA`, while colcon builds topological order from `package.xml`. |
-| **7** | 🔍 **Medium** | Extensibility | Dynamic metadata ignorance (`dynamic = ["version", "dependencies"]`) | `PEP621PackageAugmentation` reads static TOML; ignores existing `colcon_core/python_project/metadata.py` hook caller. |
-| **8** | 🔍 **Medium** | Workspace | Setuptools in-source tree pollution (`.egg-info/`) | Missing `SetuptoolsDecorator` from `colcon-python-project`; building leaves untracked build artifacts in git source tree. |
-| **9** | 🔍 **Medium** | Windows | Unhandled privilege errors on Windows symlink installs | `colcon_core.task.install()` crashes if `os.symlink` fails due to lack of `SeCreateSymbolicLinkPrivilege`. |
+| **1** | **Critical** | ROS 2 CLI | `ros2 run` cannot find executables built from `pyproject.toml` (`bin/` vs `lib/<pkg>/`) | **Resolved** in Stage 2 (`colcon-core#751`, `463df5f`) & Stage 3 (`colcon-ros#171`, `359ab5c`) |
+| **2** | **Critical** | Test Suite | `colcon test` skips testing for modern `pyproject.toml` packages (`ros.ament_python` & `python.project`) | **Resolved for ROS 2 (`ros.ament_python`)** in Stage 3 (`359ab5c`); **Scheduled for pure `python.project`** in Stage 4A |
+| **3** | **Critical** | Packaging | Data-files parity breakage between standard build and `--symlink-install` + duplicate `RECORD` entries | **Resolved** in Stage 2 (`colcon-core#751`, `463df5f`) & mock package `03` (`e07c6d2`) |
+| **4** | **High** | Identification | Priority tie (`PRIORITY = 90`) between `colcon-python-setup-py` and `PEP621PackageIdentification` | **Documented** in `docs/pr/pr_750_priority_comment.md` (deferred pending maintainer review of `#750`) |
+| **5** | **High** | Environment | Non-isolated PEP 517 builds & `rosdep` blind spot for `[build-system].requires` (incl. `wheel` on `setuptools < 70.1`) | **Documented** in Stage 2/3 PRs, Gist, and dual-manifest user guides |
+| **6** | **High** | Metadata | Dual-manifest synchronization (`package.xml` vs `pyproject.toml`) + post-wheel `ament_index` / `package.xml` `RECORD` tracking | **Resolved & Documented** in Stage 3 (`colcon-ros#171`, `359ab5c`) |
+| **7** | **Medium** | Extensibility | Dynamic metadata (`dynamic = ["version", "dependencies"]`) ignored by static TOML parsing in `PEP621PackageAugmentation` | **Scheduled** for Stage 4C (`colcon-core`, stacked on `cottsay/pep621`) |
+| **8** | **Medium** | Workspace | `setuptools.build_meta` leaves `.egg-info/` and `build/` artifacts in the package source tree | **Scheduled** for Stage 4B (`colcon-core`, targets `master` directly) |
+| **9** | **Medium** | Windows | Unhandled `OSError` when `os.symlink` lacks `SeCreateSymbolicLinkPrivilege` on Windows | **Scheduled** for Stage 4D (`colcon-core`, targets `master` directly) |
+| **10** | **Medium** | Wheel Rebuild | Cached `ScriptMaker` (`@lru_cache` on `_get_script_maker`) fails with `FileNotFoundError` after `remove_distributions` deletes an empty `script_dir` in the same Python process | **Uncovered in Stage 3**; **Scheduled** for Stage 4D (`colcon-core`, targets `master` directly) |
 
 ---
 
 ## 2. In-Depth Pitfall Breakdown & Technical Root Causes
 
-### Pitfall 1: Breaking `ros2 run` (`bin/` vs `lib/<package>/`)
-* **Mechanism**: In ROS 2, `ros2 run <pkg> <executable>` queries `ros2pkg.api.get_executable_paths(package_name=...)`, which searches `<install_prefix>/lib/<package>/`.
+### Pitfall 1: Breaking `ros2 run` (`bin/` vs `lib/<package>/`) — [RESOLVED]
+* **Mechanism**: In ROS 2, `ros2 run <pkg> <executable>` queries `ros2pkg.api.get_executable_paths(package_name=...)`, searching `<install_prefix>/lib/<package>/`.
+* **Root Cause**: `install_wheel` defaults to `<install_base>/bin` (`Scripts` on Windows). Pure `pyproject.toml` packages lack `setup.cfg` `[install] install_scripts`, and `PythonProjectBuildTask.build()` previously did not expose `script_dir_override` (plus its `$base` expansion doubled relative `install_base` paths).
+* **Resolution**:
+  * Stage 2 (`colcon-core#751`, `463df5f`): Added `script_dir_override=None` to `PythonProjectBuildTask.build()` and initialized `_override = Path()` when expanding `$base`.
+  * Stage 3 (`colcon-ros#171`, `359ab5c`): `AmentPythonBuildTask` forwards `script_dir_override=Path('lib') / self.context.pkg.name` to `PythonProjectBuildTask.build()` and unwraps `additional_hooks=additional_hooks` so both `.dsv` and shell `ament_prefix_path` hooks register cleanly.
+
+### Pitfall 2: `colcon test` Skipped for Modern Packages — [ROS 2 RESOLVED / `python.project` STAGE 4A]
+* **Mechanism**: `colcon test` dispatches `colcon_core.task.test` extensions by `pkg.type`.
 * **Root Cause**:
-  * In `colcon_core/python_project/wheel.py`, `install_wheel` defaults to placing scripts in `<install_base>/bin` (or `Scripts` on Windows).
-  * `colcon_core/task/python_project/build.py` checks for `script-dir` in `setup.cfg`. In a pure modern package without `setup.cfg`, `script_dir_override` evaluates to `None`.
-  * In `colcon-ros` PR #171 (`colcon_ros/task/ament_python/build.py`), `AmentPythonBuildTask` delegates to `PythonProjectBuildTask` without supplying `script_dir_override`.
-  * Additionally, `PythonProjectBuildTask.build(*, additional_hooks=None)` currently does not accept `script_dir_override` as an argument.
-* **Impact**: CLI commands (`ros2 run`, `ros2 launch`) fail with `Package '<pkg>' doesn't have the executable '<node>'`. Mock scenario 4 masked this by calling the binary file directly via python.
+  * **In `colcon-ros` (`ros.ament_python`)**: `RosAmentPythonPackageAugmentation` previously returned early when `setup.py` was absent, leaving `get_python_setup_options` unset so `PytestPythonTestingStep.match()` could not detect `pytest`. **Resolved in Stage 3 (`359ab5c`)** by populating `get_python_setup_options` from `pyproject.toml` (`[project.dependencies]`, `[project.optional-dependencies]`, and PEP 735 `[dependency-groups]`, merged with `setup.cfg` `[options]` if present).
+  * **In `colcon-core` (`python.project`)**: `setup.cfg` does not yet register a `python.project` entry point under `colcon_core.task.test`. **Scheduled for Stage 4A**.
 
-### Pitfall 2: `colcon test` Skipped for Modern Packages
-* **Mechanism**: `colcon test` resolves task extensions from `colcon_core.task.test` matching `pkg.type`.
-* **Root Cause**:
-  * **In `colcon-core`**: `setup.cfg` has no entry point for `python.project` under `colcon_core.task.test`. Running `colcon test --packages-select <pep621_pkg>` logs `WARNING: No task extension to 'test' a 'python.project' package` and terminates cleanly without executing tests.
-  * **In `colcon-ros`**: `AmentPythonTestTask` delegates to `PythonTestTask`, which calls `has_test_dependency(setup_py_data, 'pytest')`. For a pure `pyproject.toml` package, `RosAmentPythonPackageAugmentation` exits early because `setup.py` does not exist, leaving `setup_py_data = {}`. `pytest` matching returns `False`, logging `WARNING: No Python Testing Step extension matched`.
-* **Impact**: Modernized ROS 2 packages cannot run unit or integration tests under colcon.
+### Pitfall 3: Backend Fragmentation & Data-Files Asymmetry — [RESOLVED]
+* **Mechanism**: PEP 621 leaves arbitrary data-file packaging to backend-specific tables, which pack non-code assets into `<dist>.data/data/...`.
+* **Root Cause**: Unscoped parsing of `setup.cfg` during `--symlink-install` caused `flit_core` packages to symlink files in editable mode that were silently omitted in release builds, while appending duplicate lines to `.dist-info/RECORD`.
+* **Resolution**: Stage 2 (`colcon-core#751`, `463df5f`) scoped `_get_data_files_mapping(pkg, backend_name)` strictly to `setuptools.build_meta*` (with glob expansion across `setup.cfg` and `[tool.setuptools.data-files]`) and `hatchling.*` (single-file and directory `[tool.hatch.build.targets.wheel.shared-data]`), deduplicated `.dist-info/RECORD` updates in place via `record_map`, and migrated mock package `03_modern_editable_data_files` to `hatchling` `shared-data`.
 
-### Pitfall 3: Backend Fragmentation & Data Files Asymmetry (PR #751)
-* **Mechanism**: PEP 621 deliberately excluded `data_files` from `[project]`. Standard Python backends package non-code assets into the `.data/` directory of the wheel archive (`<dist>.data/data/share/...`).
-* **Root Cause**:
-  * `colcon-core` Draft PR #751 introduces `_get_data_files_mapping()`, which manually parses `setup.cfg`, `tool.setuptools.data-files`, and `tool.hatch.build.targets.wheel.shared-data`.
-  * This mapping is only executed when `--symlink-install` is active.
-  * In a release build (`colcon build`), `install_wheel` extracts the `.data/` folder from the wheel. For backends like `flit_core` that do not support arbitrary data files, data files are never packed into the wheel.
-  * As a result, mock package `03_modern_editable_data_files` works under `--symlink-install` (because colcon parses `setup.cfg` directly), but completely fails to install launch/config files during a standard release build.
-  * For backends that do support shared data (Hatchling, Setuptools), `install_wheel` installs them and records them in `RECORD`, and then `_get_data_files_mapping` appends duplicate entries into `RECORD`.
-* **Impact**: Violates PEP 517 backend agnosticism; creates inconsistent behavior between dev and production builds.
+### Pitfall 4: Priority Collision in Package Identification — [PREPARED / DEFERRED]
+* **Mechanism**: `order_extensions_by_priority` sorts by `(-PRIORITY, entry_point_name)`.
+* **Root Cause**: Both `PEP621PackageIdentification` (`cottsay/pep621`) and `colcon-python-setup-py` set `PRIORITY = 90`, and `'pep621'` sorts alphabetically ahead of `'python_setup_py'`, claiming hybrid `setup.py` + `pyproject.toml` packages as `python.project`.
+* **Remediation**: Lowering `PEP621PackageIdentification.PRIORITY` to `80` preserves `setup.cfg (100) > setup.py (90) > pep621 (80)`. Documented in `docs/pr/pr_750_priority_comment.md` for maintainer discussion on `colcon/colcon-core#750` without expanding `#750`'s test-focused diff.
 
-### Pitfall 4: Priority Collision in Package Identification
-* **Mechanism**: Colcon executes identification extensions in order of priority.
-* **Root Cause**:
-  * `colcon_core/package_identification/pep621.py`: `PRIORITY = 90`.
-  * `colcon_python_setup_py/package_identification/python_setup_py.py`: `PRIORITY = 90`.
-  * Comment in `pep621.py` explicitly states: `# the priority needs to be lower than the extensions identifying packages using setup.py and/or setup.cfg files`.
-* **Impact**: For hybrid repositories with both `setup.py` (legacy fallback) and `pyproject.toml`, resolution order is non-deterministic, varying across operating systems or Python environments based on entry-point dictionary iteration.
+### Pitfall 5: Non-Isolated Builds & `rosdep` Blind Spot — [DOCUMENTED]
+* **Mechanism**: `colcon` invokes PEP 517 hooks in the active workspace environment without pip-style ephemeral virtual environments, while `rosdep` reads only `package.xml`. Furthermore, `setuptools < 70.1` imports the external `wheel` package (`wheel.bdist_wheel`) during `build_wheel` and `build_editable`.
+* **Resolution**: Documented across PR descriptions and guides that ROS 2 `pyproject.toml` packages must declare `<build_depend>` entries in `package.xml` for their PEP 518 backend (`python3-flit-core`, `python3-hatchling`, or `python3-setuptools` plus `python3-wheel` on Ubuntu 22.04/24.04). Guarded optional-wheel setuptools integration tests in `colcon-core#751` (`463df5f`), verified across 46/46 CI jobs.
 
-### Pitfall 5: Build Isolation & Missing `rosdep` Integration
-* **Mechanism**: Colcon relies on the host environment (or active venv) to contain build backends (`flit_core`, `hatchling`, `setuptools`).
-* **Root Cause**: `colcon` does not perform pip-style build isolation (`pip` builds in ephemeral virtual environments). `rosdep` resolves `<build_depend>` tags from `package.xml`. It does not parse `pyproject.toml` `[build-system].requires`.
-* **Impact**: If developers declare build backends exclusively in `pyproject.toml`, automated CI/CD runners (ROS buildfarm, industrial CI) will fail with missing module errors.
+### Pitfall 6: Dual-Manifest Sync & Rebuild Idempotency for `ament_index` / `package.xml` — [RESOLVED]
+* **Mechanism**: `install_wheel` calls `remove_distributions()` at the start of every build, deleting all paths listed in the prior `.dist-info/RECORD` and pruning empty directories.
+* **Root Cause**: Creating `share/ament_index/resource_index/packages/<pkg>` and `share/<pkg>/package.xml` *before* `PythonProjectBuildTask.build()` either left them untracked in `RECORD` (leaking orphan files on uninstall) or caused `remove_distributions()` to delete them on rebuild #2.
+* **Resolution**: Stage 3 (`colcon-ros#171`, `359ab5c`) installs `ament_index` and `package.xml` *after* `PythonProjectBuildTask.build()` succeeds (without clobbering wheel-provided files) and records them in `.dist-info/RECORD`.
 
-### Pitfall 6: Metadata Duplication & Dual-Manifest Synchronization
-* **Mechanism**: ROS 2 packages require `package.xml` for workspace dependencies and metadata; Python standard wheels require `[project]` in `pyproject.toml` to populate `.dist-info/METADATA`.
-* **Root Cause**: Two divergent sources of truth exist in the same package repository.
-* **Impact**: Mismatches lead to runtime failure in `importlib.metadata` / `pip check` if omitted from `pyproject.toml`, or build ordering failures in colcon topological sort if omitted from `package.xml`.
+### Pitfall 7: Dynamic Metadata Ignored (`dynamic = ["version", "dependencies"]`) — [STAGE 4C]
+* **Root Cause**: `PEP621PackageAugmentation` inspects static `pyproject.toml` tables and is not yet wired to `colcon_core/python_project/metadata.py` (`load_and_cache_metadata` / `prepare_metadata_for_build_wheel`).
+* **Planned Fix (Stage 4C)**: Invoke `load_and_cache_metadata` when `project.dynamic` contains `version`, `dependencies`, or `optional-dependencies`.
 
-### Pitfall 7: Dynamic Metadata Ignored (`dynamic = ["version", "dependencies"]`)
-* **Mechanism**: PEP 621 allows delegating metadata fields to dynamic hooks (e.g. `setuptools_scm`, `hatch-vcs`).
-* **Root Cause**: `PEP621PackageAugmentation` only performs static dictionary queries on `spec['project']`. However, `colcon_core/python_project/metadata.py` (`load_and_cache_metadata`) already exists and implements the PEP 517 `prepare_metadata_for_build_wheel` hook, but is not connected to `PEP621PackageAugmentation`.
-* **Impact**: Colcon cannot sequence dependencies or report versions for dynamic packages.
+### Pitfall 8: Setuptools In-Source Tree Pollution (`.egg-info/`) — [STAGE 4B]
+* **Root Cause**: `setuptools.build_meta` creates `<pkg>.egg-info/` in the source directory unless `--build-base` / `--egg-base` scratch directories are injected via a `HookCallerDecoratorExtensionPoint` (`SetuptoolsDecorator`).
+* **Planned Fix (Stage 4B)**: Port `SetuptoolsDecorator` into `colcon-core` targeting `colcon-core:master` directly (since `HookCallerDecoratorExtensionPoint` is already merged on `master` via PR #732).
 
-### Pitfall 8: Setuptools In-Source Tree Pollution
-* **Mechanism**: Running `build_wheel` or `build_editable` with `setuptools.build_meta` generates `<pkg>.egg-info/` and `build/` directories directly in the source tree.
-* **Root Cause**: The original prototype `colcon-python-project` implemented `SetuptoolsDecorator` with `_ScratchBuildBase` and `_ScratchEggBase` to redirect output to scratch paths via `config_settings`. This decorator was not ported to `colcon-core`.
-* **Impact**: Running builds pollutes source workspaces and git status.
+### Pitfall 9: Windows Symlink Privileges on Non-Admin Accounts — [STAGE 4D]
+* **Root Cause**: `os.symlink()` on Windows raises `OSError` (`winerror 1314`) when Developer Mode / `SeCreateSymbolicLinkPrivilege` is unavailable.
+* **Planned Fix (Stage 4D)**: Catch symlink privilege `OSError` on Windows, log a clear warning, and fall back to copying the file so `--symlink-install` degrades gracefully.
 
-### Pitfall 9: Windows Symlink Privileges on Non-Admin Accounts
-* **Mechanism**: `colcon_core.task.install()` creates symlinks via `os.symlink()` when `symlink_install=True`.
-* **Root Cause**: On Windows, `os.symlink()` raises `OSError` (Privilege not held) unless Developer Mode is activated or running as Administrator.
-* **Impact**: Editable builds with data-file symlinking fail unconditionally on unprivileged Windows systems.
+### Pitfall 10: Cached `ScriptMaker` Failure After `remove_distributions` Directory Pruning — [STAGE 4D]
+* **Mechanism**: Uncovered while running repeated in-process rebuilds in Stage 3 (`test_ament_python_build_pep621`).
+* **Root Cause**: `colcon_core/python_project/wheel.py` decorates `_get_script_maker(script_dir)` with `@lru_cache(maxsize=32)`. Inside `distlib`, `ScriptMaker._fileop` (`FileOperator`) caches created directory paths in `self._created` and skips `os.makedirs` if a path is already in `self._created`. When a second build in the same Python process calls `remove_distributions()`, `remove_distributions()` unlinks old scripts and `rmdir()`s the empty `script_dir`; `install_wheel()` then reuses the cached `ScriptMaker`, skips directory creation, and raises `FileNotFoundError`.
+* **Planned Fix (Stage 4D)**: Ensure `script_dir.mkdir(parents=True, exist_ok=True)` in `install_wheel()` (or avoid caching stateful `FileOperator` instances across calls) on `colcon-core:master`.
 
 ---
 
-## 3. Remediation & Upstream PR Staging Strategy
-
-Upstream maintainer Scott Logan (`cottsay`) favors decomposing large features into single-concern, highly auditable PRs (e.g. #728, #732, #741). We adopt a **Hybrid PR Staging Strategy** based on the status of each PR:
+## 3. Staged Remediation & Upstream PR Status
 
 ```mermaid
 flowchart TD
-    subgraph S1["PR #750: colcon-core (SUBMITTED)"]
-        direction TB
-        P750["Keep Scope Minimal<br/>run_until_complete + backend tests"]
-        P750_note["Submit review comment on #750:<br/>propose PRIORITY = 80 for pep621.py"]
+    subgraph S1["Stage 1: colcon-core#750 (SUBMITTED — 4a594c8)"]
+        P750["Target: cottsay/pep621<br/>run_until_complete + flit_core/hatchling tests<br/>Priority note prepared in docs/pr/pr_750_priority_comment.md"]
     end
 
-    subgraph S2["Draft PR #751: colcon-core (DRAFT)"]
-        direction TB
-        P751["Fix Data Files In-Place<br/>1. Backend-agnostic extraction<br/>2. Avoid duplicate RECORD entries<br/>3. Accept script_dir_override in build()"]
+    subgraph S2["Stage 2: colcon-core#751 (DRAFT — 463df5f, 46/46 CI GREEN)"]
+        P751["Target: master<br/>1. Backend-scoped editable data-file symlinking<br/>2. In-place deduplicated RECORD updates<br/>3. script_dir_override + relative $base fix"]
     end
 
-    subgraph S3["Draft PR #171: colcon-ros (DRAFT)"]
-        direction TB
-        P171["Fix ROS 2 Integration In-Place<br/>1. Pass script_dir_override to lib/pkg<br/>2. Fix additional_hooks argument wrapping<br/>3. Wire RosAmentPythonPackageAugmentation to metadata<br/>4. Fix RECORD logging for package.xml"]
+    subgraph S3["Stage 3: colcon-ros#171 (DRAFT — 359ab5c, 16/16 PYTEST GREEN)"]
+        P171["Target: master<br/>1. script_dir_override = Path('lib') / pkg.name<br/>2. Flat additional_hooks list for package scripts<br/>3. Post-wheel ament_index & package.xml in RECORD<br/>4. RosAmentPythonPackageAugmentation for colcon test"]
     end
 
-    subgraph S4["Follow-up Upstream PRs: colcon-core"]
-        direction TB
-        F1["PR: Add python.project to colcon_core.task.test"]
-        F2["PR: Port SetuptoolsDecorator (clean source tree)"]
-        F3["PR: Dynamic metadata hook in augmentation"]
-        F4["PR: Windows symlink fallback handling"]
+    subgraph S4M["Stage 4 (Group A — Targets colcon-core:master Directly)"]
+        F4B["Stage 4B: SetuptoolsDecorator<br/>Scratch --build-base / --egg-base isolation"]
+        F4D["Stage 4D: Wheel & Windows Resilience<br/>script_dir.mkdir fix + Windows symlink fallback"]
+    end
+
+    subgraph S4P["Stage 4 (Group B — Stacked on cottsay/pep621 / #750)"]
+        F4A["Stage 4A: PythonProjectTestTask<br/>colcon_core.task.test entry point for python.project"]
+        F4C["Stage 4C: Dynamic Metadata Hook<br/>Wire PEP621PackageAugmentation to load_and_cache_metadata"]
+    end
+
+    subgraph S5["Stage 5: Ecosystem Transition (Post-Merge)"]
+        P5["Deprecate colcon/colcon-python-project<br/>Close prototype PR #1 with migration notice"]
     end
 
     S1 --> S2
     S2 --> S3
-    S3 --> S4
+    S1 --> S4P
 ```
 
-### Stage 1: Preserve PR #750 Stability & Address Priority
-* **Repository**: `colcon/colcon-core`
-* **Target Branch**: `cottsay/pep621`
-* **Head Branch**: `KmoM88/colcon-core:feature/pep621-upstream-pr`
-* **Action**:
-  1. Do not bloat PR #750 with testing tasks or decorators. Keep it strictly focused on test runner harmonization and multi-backend integration tests.
-  2. Post an upstream comment on PR #750 proposing to adjust `PEP621PackageIdentification.PRIORITY = 80` (lower than `colcon-python-setup-py`'s 90) to strictly honor the existing docstring comment:
-     ```python
-     # the priority needs to be lower than the extensions identifying packages
-     # using setup.py and/or setup.cfg files.
-     PRIORITY = 80
-     ```
+### Completed Stages (Stages 1–3)
 
-### Stage 2: Refactor Draft PR #751 (`colcon-core` Data Files & Script Override)
-* **Repository**: `colcon/colcon-core`
-* **Target Branch**: `master` (or stacked on `cottsay/pep621`)
-* **Head Branch**: `KmoM88/colcon-core:feature/pep660-editable-data-files`
-* **Action**:
-  1. **Expose `script_dir_override` in `PythonProjectBuildTask.build`**:
-     ```python
-     async def build(self, *, additional_hooks=None, script_dir_override=None):
-     ```
-     Allowing calling tasks (such as `colcon-ros`) to explicitly define script locations without forcing a `setup.cfg`.
-  2. **Refactor Data Files Handling**:
-     * Eliminate proprietary parsing of `setup.cfg` when building pure PEP 621 packages.
-     * Enforce backend-agnostic behavior: during standard builds, rely on the wheel's standard `.data/` directory; during editable installs (`--symlink-install`), symlink data files defined by backend specifications and register each once without duplicating `RECORD`.
-     * Update mock package `03_modern_editable_data_files` to use standard `hatchling` shared-data configuration.
+1. **Stage 1 (`colcon/colcon-core#750`, Commit `4a594c8`) — COMPLETED & SUBMITTED**:
+   - Kept PR #750 strictly focused on `run_until_complete` async test alignment and multi-backend (`flit_core`, `hatchling`) integration tests against `cottsay/pep621`.
+   - Prepared optional review note on `PRIORITY = 80` in `docs/pr/pr_750_priority_comment.md` (held back per review strategy until maintainer feedback on `#750`).
+2. **Stage 2 (`colcon/colcon-core#751`, Commit `463df5f`) — COMPLETED & VERIFIED (46/46 CI GREEN)**:
+   - Implemented `script_dir_override`, fixed relative `install_base` `$base` resolution, scoped `_get_data_files_mapping` to `setuptools.build_meta*` (with globs) and `hatchling.*` (`shared-data`), deduplicated `.dist-info/RECORD` updates, isolated entry-point caches in tests, and verified 46/46 GitHub Actions checks green (`256 passed, 5 skipped` locally).
+   - Updated PR #751 title/description and synced the upstream Gist.
+3. **Stage 3 (`colcon/colcon-ros#171`, Commit `359ab5c`, & Base Repo `e07c6d2`) — COMPLETED & VERIFIED (16/16 PYTEST GREEN)**:
+   - Updated `AmentPythonBuildTask` (`script_dir_override=Path('lib') / pkg.name`, flat `additional_hooks`, post-wheel `ament_index` and `package.xml` installation recorded in `.dist-info/RECORD`) and `RosAmentPythonPackageAugmentation` (`pyproject.toml` PEP 621 / PEP 735 test dependency discovery for `colcon test`).
+   - Fixed `flake8` and `scspell3k` checks, added backend-independent unit tests plus `flit_core` integration tests (`16 passed` under `pytest --cov --cov-branch`), updated PR #171 description, and updated mock packages `03` and `04` (`4/4` scenarios passing in `scripts/test_mock_packages.py`).
 
-### Stage 3: Refactor Draft PR #171 (`colcon-ros` ROS 2 Modernization)
-* **Repository**: `colcon/colcon-ros`
-* **Target Branch**: `master`
-* **Head Branch**: `KmoM88/colcon-ros:feature/ros-ament-python-project`
-* **Action**:
-  1. **Fix `ros2 run` Script Destination**:
-     In `AmentPythonBuildTask`:
-     ```python
-     script_dir = Path(args.install_base) / 'lib' / self.context.pkg.name
-     return await extension.build(
-         additional_hooks=additional_hooks,
-         script_dir_override=script_dir)
-     ```
-  2. **Fix `additional_hooks` Argument Passing**:
-     Change `additional_hooks=[additional_hooks]` to `additional_hooks=additional_hooks` to prevent nested list crashes.
-  3. **Fix Package Augmentation & Testing in `colcon-ros`**:
-     In `RosAmentPythonPackageAugmentation`, if `setup.py` is absent but `pyproject.toml` is present, read options via `load_and_cache_metadata(desc)` or parse `pyproject.toml` test dependencies so `AmentPythonTestTask` discovers `pytest`.
-  4. **Record Package Manifest**:
-     Ensure `package.xml` and the `ament_index` marker file installed by `colcon-ros` are appended to `.dist-info/RECORD` so `remove_distributions` uninstalls them cleanly.
+### Planned Next Stages (Stages 4–5)
 
-### Stage 4: Follow-up Additive PRs in `colcon-core`
-* **Repository**: `colcon/colcon-core`
-1. **PR 4A: `python.project` Test Task**:
-   * Register `python.project = colcon_core.task.python_project.test:PythonProjectTestTask` in `setup.cfg`.
-   * Enable `PytestPythonTestingStep` to discover tests from `[project.optional-dependencies].test` or standard test directories when `setup_py_data` is empty.
-2. **PR 4B: Setuptools Source Tree Isolation**:
-   * Port `SetuptoolsDecorator` from `colcon-python-project` to prevent `.egg-info/` generation in source trees.
-3. **PR 4C: Dynamic Metadata Support**:
-   * Connect `PEP621PackageAugmentation` with `colcon_core.python_project.metadata.load_and_cache_metadata()` when `dynamic` fields are declared in `pyproject.toml`.
-4. **PR 4D: Windows Symlink Graceful Fallback**:
-   * Catch `OSError` in `install()` on Windows when symlink privileges are missing and fall back to file copy with an informative warning.
+#### Stage 4 — Group A: Independent Single-Concern PRs Targeting `colcon/colcon-core:master`
+These enhancements build solely on primitives already merged on `colcon-core:master` (`#728`, `#732`, `#741`) and can be opened/merged independently of `#750` and `#751`:
+* **Stage 4B (`feature/setuptools-decorator`)**:
+  - Implement `SetuptoolsDecorator` (`HookCallerDecoratorExtensionPoint`) redirecting `build_wheel` / `build_editable` scratch `--build-base` and `--egg-base` directories into `<build_base>` / temporary directories so `setuptools.build_meta` never pollutes the git source tree with `.egg-info/`.
+* **Stage 4D (`feature/wheel-script-dir-and-windows-symlink`)**:
+  - Ensure `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` before invoking cached `ScriptMaker.make_multiple()` so repeated in-process builds after `remove_distributions()` never raise `FileNotFoundError`.
+  - Add graceful Windows fallback in `colcon_core.task.install()` when `os.symlink()` fails due to missing `SeCreateSymbolicLinkPrivilege`.
+
+#### Stage 4 — Group B: Follow-up Single-Concern PRs Stacked on `cottsay/pep621` (`#750`)
+These enhancements extend the `python.project` extensions introduced in `cottsay/pep621`:
+* **Stage 4A (`feature/python-project-test-task`)**:
+  - Register `python.project` under `colcon_core.task.test` (and wire `get_python_setup_options` in `PEP621PackageAugmentation`) so pure non-ROS `python.project` packages execute `pytest` via `colcon test`.
+* **Stage 4C (`feature/pep621-dynamic-metadata`)**:
+  - Connect `PEP621PackageAugmentation` to `colcon_core.python_project.metadata.load_and_cache_metadata()` when `project.dynamic` declares dynamic `version`, `dependencies`, or `optional-dependencies`.
+
+#### Stage 5: Ecosystem Transition & Deprecation (`colcon/colcon-python-project`)
+* Once Stages 1–3 land upstream, add a deprecation notice to `colcon/colcon-python-project` pointing users to native `colcon-core` / `colcon-ros` support and close prototype PR #1.
 
 ---
 
-## 4. Documentation & Ecosystem Alignment
+## 4. Implementation Roadmap Matrix
 
-1. **Dual-Manifest Guidance**:
-   * Document in the user guides that for ROS 2 `ament_python` packages:
-     * `package.xml` is the authoritative manifest for `rosdep` and workspace topological sorting.
-     * `pyproject.toml` is the authoritative manifest for the Python build backend and runtime wheel metadata.
-     * Backends (e.g. `python3-flit-core`, `python3-hatchling`, or `python3-setuptools` plus `python3-wheel` on distributions with `setuptools < 70.1` such as Ubuntu 22.04/24.04) must be listed as `<build_depend>` in `package.xml` to ensure `rosdep install` resolves them in CI.
-2. **Mock Package Suite Updates**:
-   * Update `examples/mock_packages/04_ros2_ament_pyproject` test assertion to verify binary execution from `lib/ros_pyproject_pkg/sample-node` (matching `ros2 run` behavior).
-   * Update `examples/mock_packages/03_modern_editable_data_files` to demonstrate clean shared-data packaging with `hatchling`.
-
----
-
-## 5. Implementation Roadmap Matrix
-
-| Task ID | Action Item | Target Repo & Branch | Staging Type | Prerequisite |
+| Task ID | Action Item | Target Repo & Branch | Stage | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TASK-1** | Post upstream comment on PR #750 proposing `PRIORITY = 80` | `colcon/colcon-core#750` | Review Comment | PR #750 open |
-| **TASK-2** | Support `script_dir_override` in `PythonProjectBuildTask.build()` | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) — **DONE (`463df5f`, 46/46 CI)** | TASK-1 |
-| **TASK-3** | Update `colcon-ros` PR #171: `script_dir_override = lib/<pkg>`, fix `additional_hooks`, wire metadata | `colcon-ros:feature/ros-ament-python-project` | In-place (PR #171) — **VERIFIED LOCALLY (16/16 pytest)** | TASK-2 |
-| **TASK-4** | Refactor editable data files & remove duplicate `RECORD` lines | `kmom88-colcon-core:feature/pep660-editable-data-files` | In-place (PR #751) — **DONE (`463df5f`, 46/46 CI)** | TASK-2 |
-| **TASK-5** | Update mock packages (03 and 04) and `scripts/test_mock_packages.py` | `colcon-roadmap:main` | Base Repo — **VERIFIED LOCALLY (4/4 scenarios)** | TASK-3, TASK-4 |
-| **TASK-6** | Implement `PythonProjectTestTask` for `colcon test` | `colcon-core:feature/python-project-test` | New PR | PR #750 merged |
-| **TASK-7** | Port `SetuptoolsDecorator` scratch directory isolation | `colcon-core:feature/setuptools-decorator` | New PR | PR #750 merged |
+| **TASK-1** | Keep PR #750 minimal; prepare `PRIORITY = 80` review note (`docs/pr/pr_750_priority_comment.md`) | `colcon/colcon-core#750` (`4a594c8`) | Stage 1 | **Done** (PR open; comment deferred) |
+| **TASK-2** | Add `script_dir_override` & fix relative `$base` resolution in `PythonProjectBuildTask.build()` | `KmoM88/colcon-core:feature/pep660-editable-data-files` | Stage 2 (`#751`) | **Done** (`463df5f`, 46/46 CI green) |
+| **TASK-3** | Backend-scoped editable data-file symlinking, deduplicated `RECORD`, cache-isolated tests | `KmoM88/colcon-core:feature/pep660-editable-data-files` | Stage 2 (`#751`) | **Done** (`463df5f`, 46/46 CI green) |
+| **TASK-4** | Update `colcon-ros#171`: `lib/<pkg>` script override, flat hooks, post-wheel `RECORD` tracking, `colcon test` augmentation | `KmoM88/colcon-ros:feature/ros-ament-python-project` | Stage 3 (`#171`) | **Done** (`359ab5c`, 16/16 pytest green) |
+| **TASK-5** | Update mock packages (`03`, `04`), `scripts/test_mock_packages.py`, PR descriptions & Gist | `KmoM88/colcon-roadmap:main` | Stage 3 | **Done** (`e07c6d2`, 4/4 scenarios green) |
+| **TASK-5B** | Dockerized ROS 2 Jazzy PoC (`poc/`) across active `ros2/*` packages (`demos`, `examples`, `teleop_twist_keyboard`) | `KmoM88/colcon-roadmap:main` (`poc/`) | Final PoC | **Done** (All 3 backends & 6 stages verified in Docker) |
+| **TASK-6** | Port `SetuptoolsDecorator` scratch `--build-base` / `--egg-base` isolation | `KmoM88/colcon-core:feature/setuptools-decorator` (targets `master`) | Stage 4B | **Planned** (Ready — independent of `#750`) |
+| **TASK-7** | Fix `wheel.py` `script_dir.mkdir` with cached `ScriptMaker` + Windows symlink copy fallback | `KmoM88/colcon-core:feature/wheel-script-dir-and-windows-symlink` (targets `master`) | Stage 4D | **Planned** (Ready — independent of `#750`) |
+| **TASK-8** | Register `python.project` `colcon test` task & test options augmentation | `KmoM88/colcon-core:feature/python-project-test-task` (stacked on `#750`) | Stage 4A | **Planned** (After `#750` review/merge) |
+| **TASK-9** | Wire `PEP621PackageAugmentation` to `load_and_cache_metadata` for `project.dynamic` | `KmoM88/colcon-core:feature/pep621-dynamic-metadata` (stacked on `#750`) | Stage 4C | **Planned** (After `#750` review/merge) |
+| **TASK-10** | Deprecate `colcon/colcon-python-project` & close prototype PR #1 | `colcon/colcon-python-project` | Stage 5 | **Planned** (Post-merge) |
