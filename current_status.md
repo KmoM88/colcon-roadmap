@@ -10,7 +10,8 @@ This document records the current implementation and verification state of moder
 * **Stage 1 — PR #750 (Submitted & Under Review)**: [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) (`KmoM88:feature/pep621-upstream-pr` at `4a594c8` -> `colcon:cottsay/pep621`) aligns async unit tests with `run_until_complete` and adds real multi-backend (`flit_core`, `hatchling`) integration tests.
 * **Stage 2 — Draft PR #751 (46/46 CI Checks Green)**: [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (`KmoM88:feature/pep660-editable-data-files` at `463df5f` -> `colcon:master`) adds `script_dir_override` (with relative `install_base` `$base` fix), backend-scoped editable data-file symlinking (`setuptools.build_meta*` globs + `hatchling.*` `shared-data`), deduplicated `.dist-info/RECORD` updates, and cache-isolated unit/integration tests (`256 passed, 5 skipped` locally; 46/46 GitHub Actions checks passing).
 * **Stage 3 — Draft PR #171 (16/16 `pytest` Checks Green)**: [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (`KmoM88:feature/ros-ament-python-project` at `359ab5c` -> `colcon:master`) enables ROS 2 `ament_python` packages using `pyproject.toml` without `setup.py`, routing `[project.scripts]` to `lib/<pkg>/` for `ros2 run`, passing flat `additional_hooks`, installing/recording `ament_index` and `package.xml` post-wheel for idempotent rebuilds, and augmenting test metadata in `RosAmentPythonPackageAugmentation` for `colcon test`.
-* **Final Phase PoC — Dockerized ROS 2 Jazzy Multi-Backend Validation ([`poc/`](poc/README.md))**: Self-contained Docker image (`ros:jazzy-ros-core` + modernized `colcon-core` / `colcon-ros`) executing a 6-stage verification pipeline against active `ros2/*` packages migrated to pure `pyproject.toml` (`demo_nodes_py` on `hatchling`, `examples_rclpy_minimal_publisher`/`subscriber` on `flit_core`, and `teleop_twist_keyboard` on `setuptools.build_meta`), verifying `ros2 pkg executables`, live DDS `ros2 run` message exchange, PEP 660 `--symlink-install` live `share/` data-file edits, and `colcon test`.
+* **Final Phase PoC — Dockerized & GitHub Actions ROS 2 Jazzy Multi-Backend Validation ([`poc/`](poc/README.md))**: Self-contained Docker image (`ros:jazzy-ros-core` + modernized `colcon-core` / `colcon-ros`) executing a 6-stage verification pipeline against active `ros2/*` packages migrated to pure `pyproject.toml` on branch `poc/pep621-ament-python` (`demo_nodes_py` on `hatchling` at [`KmoM88/demos@b249c6c`](https://github.com/KmoM88/demos/tree/poc/pep621-ament-python), `examples_rclpy_minimal_publisher`/`subscriber` on `flit_core` at [`KmoM88/examples@8e0155f`](https://github.com/KmoM88/examples/tree/poc/pep621-ament-python), and `teleop_twist_keyboard` on `setuptools.build_meta` at [`KmoM88/teleop_twist_keyboard@962e0e9`](https://github.com/KmoM88/teleop_twist_keyboard/tree/poc/pep621-ament-python)), verified both locally and on GitHub Actions via [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) in run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655).
+* **Published Results Summary (Gist)**: Results-only upstream summary synced at [gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed) ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)).
 
 ```text
 +--------------------------------------------------------------------------+
@@ -84,11 +85,19 @@ This document records the current implementation and verification state of moder
   - Updated `RosAmentPythonPackageAugmentation` (`colcon_ros/package_augmentation/ros_ament_python.py`) to extract `[project.dependencies]`, `[project.optional-dependencies]`, and PEP 735 `[dependency-groups]` test dependencies when `setup.py` is absent so `AmentPythonTestTask` matches `pytest` during `colcon test`.
   - Verified `16 passed` under `pytest --cov --cov-branch` (unit tests, `flit_core` integration test, `flake8`, `scspell3k`, copyright) and `4/4` end-to-end mock scenarios in `scripts/test_mock_packages.py`.
 
+### D. Final Phase PoC & GitHub Actions Runner (`poc/` & `.github/workflows/ros2_pep621_poc.yml`)
+* **Container Stack**: `ros:jazzy-ros-core` (Ubuntu 24.04, Python 3.12) + `submodules/kmom88-colcon-core` (`463df5f`) + `submodules/colcon-ros` (`359ab5c`).
+* **Migrated Active `ros2/*` Forks (`poc/pep621-ament-python`)**:
+  - [`KmoM88/demos@b249c6c`](https://github.com/KmoM88/demos/tree/poc/pep621-ament-python) (`demo_nodes_py` on `hatchling.build`).
+  - [`KmoM88/examples@8e0155f`](https://github.com/KmoM88/examples/tree/poc/pep621-ament-python) (`examples_rclpy_minimal_publisher` & `examples_rclpy_minimal_subscriber` on `flit_core.buildapi`).
+  - [`KmoM88/teleop_twist_keyboard@962e0e9`](https://github.com/KmoM88/teleop_twist_keyboard/tree/poc/pep621-ament-python) (`teleop_twist_keyboard` on `setuptools.build_meta`).
+* **Manual GitHub Actions Validation**: Verified green across all 3 targets and all 6 stages (`target=all`) via [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) in run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655).
+
 ---
 
 ## 4. Current Adoption Matrix
 
-| Component | Status | Location / PR | Notes |
+| Component | Status | Location / Branch / PR | Notes |
 | :--- | :--- | :--- | :--- |
 | **Backend Hook IPC & Spec Loader** | **Merged** | `colcon-core#732` | `AsyncHookCaller`, `HookCallerDecoratorExtensionPoint`, `load_and_cache_spec` |
 | **Installed File Discovery** | **Merged** | `colcon-core#728` | `InstalledDistribution` |
@@ -96,17 +105,22 @@ This document records the current implementation and verification state of moder
 | **PEP 621 Identification, Augmentation & Build** | **Submitted PR #750** | [colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750) (`4a594c8`) | Targets `cottsay/pep621`; `run_until_complete` + multi-backend integration tests |
 | **Editable Data Files & `script_dir_override`** | **Draft PR #751 (46/46 CI)** | [colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751) (`463df5f`) | Backend-scoped `share/` symlinking, deduplicated `RECORD` & relative `$base` fix |
 | **ROS 2 `ament_python` `pyproject.toml` Build & Test** | **Draft PR #171 (16/16 pytest)** | [colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171) (`359ab5c`) | `lib/<pkg>` script override, flat hooks, `RECORD`-tracked index/manifest & `colcon test` augmentation |
-| **`SetuptoolsDecorator` Scratch Isolation** | **Planned (Stage 4B)** | `colcon-core` (targets `master`) | Redirects `--build-base` / `--egg-base` out of source tree |
-| **Wheel `script_dir.mkdir` & Windows Symlink Fallback** | **Planned (Stage 4D)** | `colcon-core` (targets `master`) | Fixes cached `ScriptMaker` rebuild error + Windows `os.symlink` copy fallback |
-| **`python.project` `colcon test` Task** | **Planned (Stage 4A)** | `colcon-core` (stacked on `#750`) | Registers `python.project` under `colcon_core.task.test` |
-| **Dynamic Metadata Hook Wiring** | **Planned (Stage 4C)** | `colcon-core` (stacked on `#750`) | Connects `PEP621PackageAugmentation` to `load_and_cache_metadata` |
+| **ROS 2 Jazzy Multi-Backend PoC & GH Workflow** | **Verified Green** | [`poc/`](poc/README.md) & [run 40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655) | 3 active `ros2/*` repos (`hatchling`, `flit_core`, `setuptools.build_meta`), 6 stages passing |
+| **`SetuptoolsDecorator` Scratch Isolation** | **Planned (Group A — Stage 4B)** | `KmoM88/colcon-core:feature/setuptools-decorator` (off `master`) | Redirects `--build-base` / `--egg-base` out of source tree + registers decorator group in `setup.cfg` |
+| **Wheel `script_dir.mkdir` & Windows Symlink Fallback** | **Planned (Group A — Stage 4D)** | `KmoM88/colcon-core:feature/wheel-script-dir-and-windows-symlink` (off `master`) | Fixes cached `ScriptMaker` rebuild error + Windows `winerror 1314` `os.symlink` copy fallback |
+| **`python.project` `colcon test` Task** | **Planned (Group B — Stage 4A)** | `KmoM88/colcon-core:feature/python-project-test-task` (off `#750`) | Registers `python.project` under `colcon_core.task.test` + static PEP 621 / PEP 735 test options |
+| **Dynamic Metadata Hook Wiring** | **Planned (Group B — Stage 4C)** | `KmoM88/colcon-core:feature/pep621-dynamic-metadata` (off `#750`) | Connects `PEP621PackageAugmentation` to `load_and_cache_metadata` with PEP 517 `build_wheel` fallback |
 
 ---
 
 ## 5. Remaining Follow-Up Queue (Stages 4–5)
 
-1. **Stage 4B (`colcon-core:master`)**: Port `SetuptoolsDecorator` so `setuptools.build_meta` builds never create untracked `.egg-info/` directories in package source trees.
-2. **Stage 4D (`colcon-core:master`)**: Add `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` for cached `ScriptMaker` instances after `remove_distributions()`, and add graceful file-copy fallback in `colcon_core.task.install()` when Windows lacks `SeCreateSymbolicLinkPrivilege`.
-3. **Stage 4A (stacked on `cottsay/pep621` / `#750`)**: Register `python.project` under `colcon_core.task.test` for pure non-ROS PEP 621 `colcon test` execution.
-4. **Stage 4C (stacked on `cottsay/pep621` / `#750`)**: Wire `PEP621PackageAugmentation` to `load_and_cache_metadata` when `project.dynamic` fields are present.
-5. **Stage 5 (`colcon-python-project`)**: Deprecate `colcon/colcon-python-project` and close prototype PR #1 once Stages 1–3 land upstream.
+Detailed branch-by-branch specifications, base commits, file changes, and test suites for Stage 4 Group A and Group B are documented in **[docs/plans/stage4_branch_plan.md](docs/plans/stage4_branch_plan.md)**:
+
+1. **Stage 4 — Group A (`colcon/colcon-core:master` @ `6bfb100`)**:
+   - **Branch `feature/setuptools-decorator` (Stage 4B)**: Port `SetuptoolsHookCallerDecoratorExtension` (`colcon_core/python_project/hook_caller_decorator/setuptools.py`) and register `colcon_core.python_project.hook_caller_decorator` in `setup.cfg` so `setuptools.build_meta` builds never create untracked `.egg-info/` or `build/` directories in package source trees.
+   - **Branch `feature/wheel-script-dir-and-windows-symlink` (Stage 4D)**: Add `script_dir.mkdir(parents=True, exist_ok=True)` in `colcon_core/python_project/wheel.py` for cached `ScriptMaker` instances after `remove_distributions()`, and add graceful file-copy fallback in `colcon_core.task.install()` when Windows lacks `SeCreateSymbolicLinkPrivilege` (`winerror 1314`).
+2. **Stage 4 — Group B (Stacked on `KmoM88:feature/pep621-upstream-pr` @ `4a594c8` / `colcon:cottsay/pep621` `#750`)**:
+   - **Branch `feature/python-project-test-task` (Stage 4A)**: Register `python.project = colcon_core.task.python_project.test:PythonProjectTestTask` under `colcon_core.task.test` (with `add_arguments` no-op to avoid duplicate `--python-testing` registration) and populate static PEP 621 / PEP 735 `get_python_setup_options` in `PEP621PackageAugmentation`.
+   - **Branch `feature/pep621-dynamic-metadata` (Stage 4C)**: Wire `PEP621PackageAugmentation` to `load_and_cache_metadata` when `project.dynamic` fields are declared, including PEP 517 `build_wheel` fallback when optional `prepare_metadata_for_build_wheel` is absent.
+3. **Stage 5 (`colcon-python-project`)**: Deprecate `colcon/colcon-python-project` and close prototype PR #1 once Stages 1–3 land upstream.

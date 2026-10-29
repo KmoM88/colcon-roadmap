@@ -24,11 +24,11 @@ This directory contains a self-contained Dockerized Proof of Concept (PoC) valid
 
 Each target clones a migrated branch (`poc/pep621-ament-python`) of an active official `ros2/*` repository where `setup.py` and `setup.cfg` have been removed in favor of standard PEP 621 `pyproject.toml`, exercising all three major Python build backends:
 
-| # | CLI `--target` | Upstream Repository | Migrated Package(s) | PEP 517/660 Backend | Highlighted Features |
+| # | CLI `--target` | Upstream Repository & PoC Fork (`poc/pep621-ament-python`) | Migrated Package(s) | PEP 517/660 Backend | Highlighted Features |
 | :- | :--- | :--- | :--- | :--- | :--- |
-| **1 (Default)** | `demo_nodes_py` | [`ros2/demos`](https://github.com/ros2/demos) (`jazzy`) | `demo_nodes_py` | `hatchling.build` | 13 `[project.scripts]` ROS 2 nodes, `share/demo_nodes_py/params.yaml` wheel `.data/` & `--symlink-install` live symlink, live `talker`/`listener` DDS pub/sub, `colcon test` |
-| **2 (Optional)** | `examples_rclpy` | [`ros2/examples`](https://github.com/ros2/examples) (`jazzy`) | `examples_rclpy_minimal_publisher`, `examples_rclpy_minimal_subscriber` | `flit_core.buildapi` | Multi-package pure PEP 621 build, 7 executables, PEP 660 `.pth` editable build, live minimal pub/sub DDS communication, `colcon test` |
-| **3 (Optional)** | `teleop_twist_keyboard` | [`ros2/teleop_twist_keyboard`](https://github.com/ros2/teleop_twist_keyboard) (`jazzy`) | `teleop_twist_keyboard` | `setuptools.build_meta` | Single-file `py-modules` node without `setup.py`/`setup.cfg`, live PTY keystroke -> `/cmd_vel` `Twist` DDS verification via `ros2 run`, PEP 660 editable build, `colcon test` (incl. `ament_xmllint` on `package.xml` `<build_depend>`) |
+| **1 (Default)** | `demo_nodes_py` | [`ros2/demos`](https://github.com/ros2/demos) (`jazzy`)<br/>[`KmoM88/demos@b249c6c`](https://github.com/KmoM88/demos/tree/poc/pep621-ament-python) | `demo_nodes_py` | `hatchling.build` | 13 `[project.scripts]` ROS 2 nodes, `share/demo_nodes_py/params.yaml` wheel `.data/` & `--symlink-install` live symlink, live `talker`/`listener` DDS pub/sub, `colcon test` |
+| **2 (Optional)** | `examples_rclpy` | [`ros2/examples`](https://github.com/ros2/examples) (`jazzy`)<br/>[`KmoM88/examples@8e0155f`](https://github.com/KmoM88/examples/tree/poc/pep621-ament-python) | `examples_rclpy_minimal_publisher`, `examples_rclpy_minimal_subscriber` | `flit_core.buildapi` | Multi-package pure PEP 621 build, 7 executables, PEP 660 `.pth` editable build, live minimal pub/sub DDS communication, `colcon test` |
+| **3 (Optional)** | `teleop_twist_keyboard` | [`ros2/teleop_twist_keyboard`](https://github.com/ros2/teleop_twist_keyboard) (`jazzy`)<br/>[`KmoM88/teleop_twist_keyboard@962e0e9`](https://github.com/KmoM88/teleop_twist_keyboard/tree/poc/pep621-ament-python) | `teleop_twist_keyboard` | `setuptools.build_meta` | Single-file `py-modules` node without `setup.py`/`setup.cfg`, live PTY keystroke -> `/cmd_vel` `Twist` DDS verification via `ros2 run`, PEP 660 editable build, `colcon test` (incl. `ament_xmllint` on `package.xml` `<build_depend>`) |
 
 ---
 
@@ -64,7 +64,7 @@ Reuse an already-built Docker image without rebuilding:
 You can also run the PoC on demand in GitHub Actions without a local Docker installation via [`.github/workflows/ros2_pep621_poc.yml`](../.github/workflows/ros2_pep621_poc.yml):
 
 1. Open the repository **Actions** tab on GitHub and select **ROS 2 Jazzy PEP 621 / PEP 660 Proof of Concept**, then click **Run workflow** and choose `all`, `demo_nodes_py`, `examples_rclpy`, or `teleop_twist_keyboard` (or run `gh workflow run ros2_pep621_poc.yml -f target=all` from the CLI).
-2. View the live stage-by-stage logs directly on the workflow **Summary** page and download the `ros2-jazzy-pep621-poc-<target>` log artifact.
+2. View the live stage-by-stage logs directly on the workflow **Summary** page and download the `ros2-jazzy-pep621-poc-<target>` log artifact (verified passing across `target=all` in run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655)).
 
 ---
 

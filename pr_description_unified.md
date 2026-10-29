@@ -42,10 +42,10 @@ By implementing this metadata-driven layout manager directly inside `colcon-core
 ## Verification & Testing
 
 This PR introduces comprehensive unit tests under the test suite:
-* **[test_wheel.py](file:///home/fede/github/kmom88/colcon-roadmap/submodules/kmom88-colcon-core/test/test_wheel.py)**:
+* **[test_remove_wheel.py](submodules/kmom88-colcon-core/test/test_remove_wheel.py)**:
   * Sets up a mock workspace and dynamically copies distributions (`typical-dist-info`, `typical-egg-info`, `typical-egg-link`).
   * Asserts that `remove_distributions` successfully uninstalls standard, legacy, and egg-linked packages, deletes all associated files, and cleans up empty parent directories while leaving non-empty folders untouched.
-* **[test_install_wheel.py](file:///home/fede/github/kmom88/colcon-roadmap/submodules/kmom88-colcon-core/test/test_install_wheel.py)**:
+* **[test_install_wheel.py](submodules/kmom88-colcon-core/test/test_install_wheel.py)**:
   * Programmatically mocks pure Python wheels, platform-specific wheels, wheels with console scripts, and wheels with data files.
   * Asserts that `install_wheel` extracts files into correct library paths, builds CLI scripts, maps data files to `share/`, and writes valid `INSTALLER` and `RECORD` files.
   * Verifies that the installer cleans up older package versions prior to installation.

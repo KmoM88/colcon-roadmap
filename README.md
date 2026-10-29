@@ -14,16 +14,18 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 * **Stage 1: Core PEP 621 Support & Multi-Backend Integration Tests (`colcon-core`)** -> **SUBMITTED ([colcon/colcon-core#750](https://github.com/colcon/colcon-core/pull/750))** (Commit `4a594c8` targeting `cottsay/pep621`; `run_until_complete` async test alignment + `flit_core` / `hatchling` integration suite).
 * **Stage 2: Backend-Scoped Editable Data Files & Script Override (`colcon-core`)** -> **DRAFT PR VERIFIED ([colcon/colcon-core#751](https://github.com/colcon/colcon-core/pull/751))** (Commit `463df5f`; **46/46 GitHub Actions CI checks passing**, `256 passed, 5 skipped` locally).
 * **Stage 3: ROS 2 `ament_python` Native `pyproject.toml` Support (`colcon-ros`)** -> **DRAFT PR VERIFIED ([colcon/colcon-ros#171](https://github.com/colcon/colcon-ros/pull/171))** (Commit `359ab5c`; `ros2 run` `lib/<pkg>` script override, flat `additional_hooks`, `RECORD`-tracked `ament_index` & `package.xml`, and `colcon test` augmentation; **16/16 `pytest --cov --cov-branch` checks passing** + **4/4 mock scenarios verified**).
-* **Final Phase PoC: Dockerized ROS 2 Jazzy Multi-Backend Showcase ([`poc/`](poc/README.md))** -> **IMPLEMENTED & VERIFIED** (Builds, runs via `ros2 run` with live DDS pub/sub, tests `--symlink-install` PEP 660 editable symlinks, and executes `colcon test` across official `ros2/*` packages migrated to pure `pyproject.toml` using `hatchling`, `flit_core`, and `setuptools.build_meta`).
+* **Final Phase PoC: Dockerized & GitHub Actions ROS 2 Jazzy Multi-Backend Showcase ([`poc/`](poc/README.md))** -> **IMPLEMENTED & VERIFIED** (Builds, runs via `ros2 run` with live DDS pub/sub, tests `--symlink-install` PEP 660 editable symlinks, and executes `colcon test` across official `ros2/*` packages migrated to pure `pyproject.toml` on branch `poc/pep621-ament-python` using `hatchling`, `flit_core`, and `setuptools.build_meta`; verified locally and on GitHub Actions via [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) in run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655)).
 
 ### Planned Follow-Up Stages (Stages 4–5)
 
-* **Stage 4 (Group A — Targets `colcon-core:master` Directly)**:
-  - **4B (`SetuptoolsDecorator`)**: Scratch `--build-base` / `--egg-base` isolation so `setuptools.build_meta` builds do not write `.egg-info/` into the source tree.
-  - **4D (Wheel `script_dir` & Windows Symlink Resilience)**: Ensure `script_dir.mkdir(parents=True, exist_ok=True)` in `install_wheel` for cached `ScriptMaker` instances after `remove_distributions`, plus graceful copy fallback on unprivileged Windows symlink installs.
-* **Stage 4 (Group B — Stacked on `cottsay/pep621` / `#750`)**:
-  - **4A (`PythonProjectTestTask`)**: Register `python.project` under `colcon_core.task.test` for `colcon test`.
-  - **4C (Dynamic Metadata Hook)**: Connect `PEP621PackageAugmentation` to `load_and_cache_metadata` (`prepare_metadata_for_build_wheel`) when `project.dynamic` fields are declared.
+Detailed branch-by-branch specifications are maintained in **[docs/plans/stage4_branch_plan.md](docs/plans/stage4_branch_plan.md)**:
+
+* **Stage 4 — Group A (New Branches off `colcon/colcon-core:master` @ `6bfb100`)**:
+  - **4B (`feature/setuptools-decorator`)**: Scratch `--build-base` / `--egg-base` isolation so `setuptools.build_meta` builds never write `.egg-info/` or `build/` into the source tree, plus `colcon_core.python_project.hook_caller_decorator` extension-point group registration in `setup.cfg`.
+  - **4D (`feature/wheel-script-dir-and-windows-symlink`)**: Ensure `script_dir.mkdir(parents=True, exist_ok=True)` in `install_wheel` for cached `ScriptMaker` instances after `remove_distributions()`, plus graceful copy fallback on unprivileged Windows symlink installs (`winerror 1314`).
+* **Stage 4 — Group B (New Branches Stacked on `feature/pep621-upstream-pr` @ `4a594c8` / `cottsay/pep621` `#750`)**:
+  - **4A (`feature/python-project-test-task`)**: Register `python.project` under `colcon_core.task.test` (`PythonProjectTestTask`) and expose static PEP 621 / PEP 735 `get_python_setup_options` in `PEP621PackageAugmentation` for `colcon test`.
+  - **4C (`feature/pep621-dynamic-metadata`)**: Connect `PEP621PackageAugmentation` to `load_and_cache_metadata` (`prepare_metadata_for_build_wheel` with PEP 517 `build_wheel` fallback) when `project.dynamic` fields are declared.
 * **Stage 5: Prototype Deprecation (`colcon-python-project`)** -> **PLANNED POST-MERGE**.
 
 ---
@@ -32,12 +34,13 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 
 | Document | Purpose |
 | :--- | :--- |
-| **[Current Status](current_status.md)** | Technical analysis of merged PRs (#728, #732, #741), open/draft PRs (#750, #751, #171), verification metrics, and remaining roadmap. |
-| **[Action Plan & Next Steps](action_plan_next_steps.md)** | Step-by-step execution record for Phases 1–5 and implementation plan for Stages 4–5 (Phases 6–7). |
-| **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, delivered feature branches, and Stage 4/5 queue. |
+| **[Current Status](current_status.md)** | Technical analysis of merged PRs (#728, #732, #741), open/draft PRs (#750, #751, #171), PoC & CI verification metrics, and remaining roadmap. |
+| **[Action Plan & Next Steps](action_plan_next_steps.md)** | Step-by-step execution record for Phases 1–5 + ROS 2 Jazzy PoC, and implementation plan for Stages 4–5 (Phases 6–7). |
+| **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, delivered feature branches, and Stage 4 Group A / Group B branch queue. |
+| **[Stage 4 Branch Implementation Plan](docs/plans/stage4_branch_plan.md)** | Branch-by-branch design, base commits, file changes, edge cases, and test plans for Stage 4 Group A (`master`) and Stage 4 Group B (`#750`). |
 | **[Pitfalls & Remediation Plan](docs/plans/pitfalls_and_remediation_plan.md)** | Audit of 10 architectural pitfalls (`ros2 run`, `colcon test`, data-files parity, `ScriptMaker` cache, etc.) and staged PR remediation matrix. |
-| **[Implemented Results Summary (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Published results summary of merged foundations, delivered PRs, and ROS 2 Jazzy PoC validation ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
-| **[Dockerized ROS 2 Jazzy PoC](poc/README.md)** | Reproducible 6-stage Docker PoC building and running official `ros2/*` packages (`demo_nodes_py`, `examples_rclpy_minimal_*`, `teleop_twist_keyboard`) with pure `pyproject.toml`. |
+| **[Implemented Results Summary (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Published results-only summary of merged foundations, delivered PRs, and ROS 2 Jazzy PoC validation ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
+| **[Dockerized ROS 2 Jazzy PoC](poc/README.md)** | Reproducible 6-stage Docker & GitHub Actions PoC building and running official `ros2/*` packages (`demo_nodes_py`, `examples_rclpy_minimal_*`, `teleop_twist_keyboard`) with pure `pyproject.toml`. |
 | **[Migration Instructions](migration_instructions.md)** | Transition strategy from `colcon-python-project` to native `colcon-core`. |
 
 ---
@@ -93,14 +96,18 @@ A suite of mock packages and an automated verification runner exercise all four 
 
 A self-contained Dockerized PoC under [`poc/`](poc/README.md) validates real, active **`ros2/*`** packages migrated to pure PEP 621 `pyproject.toml` (`setup.py` and `setup.cfg` deleted) across six human-readable verification stages (manifest audit, standard PEP 517 build & `RECORD` check, live `ros2 run` DDS node execution, PEP 660 `--symlink-install` live `share/` data-file edit check, `colcon test`, and stage summary):
 
-* **Primary Target (`demo_nodes_py`)**: [`ros2/demos`](https://github.com/ros2/demos) (`hatchling.build` — 13 nodes, `share/demo_nodes_py/params.yaml` live symlink, live `talker`/`listener` DDS pub/sub, `colcon test`).
-* **Optional Target 2 (`examples_rclpy`)**: [`ros2/examples`](https://github.com/ros2/examples) (`flit_core.buildapi` — `examples_rclpy_minimal_publisher` & `examples_rclpy_minimal_subscriber` live DDS pub/sub, `colcon test`).
-* **Optional Target 3 (`teleop_twist_keyboard`)**: [`ros2/teleop_twist_keyboard`](https://github.com/ros2/teleop_twist_keyboard) (`setuptools.build_meta` — single-file `py-modules` node, live PTY keystroke -> `/cmd_vel` `Twist` DDS verification via `ros2 run`, `colcon test`).
+* **Primary Target (`demo_nodes_py`)**: [`ros2/demos`](https://github.com/ros2/demos) -> [`KmoM88/demos:poc/pep621-ament-python`](https://github.com/KmoM88/demos/tree/poc/pep621-ament-python) (`b249c6c`, `hatchling.build` — 13 nodes, `share/demo_nodes_py/params.yaml` live symlink, live `talker`/`listener` DDS pub/sub, `colcon test`).
+* **Optional Target 2 (`examples_rclpy`)**: [`ros2/examples`](https://github.com/ros2/examples) -> [`KmoM88/examples:poc/pep621-ament-python`](https://github.com/KmoM88/examples/tree/poc/pep621-ament-python) (`8e0155f`, `flit_core.buildapi` — `examples_rclpy_minimal_publisher` & `examples_rclpy_minimal_subscriber` live DDS pub/sub, `colcon test`).
+* **Optional Target 3 (`teleop_twist_keyboard`)**: [`ros2/teleop_twist_keyboard`](https://github.com/ros2/teleop_twist_keyboard) -> [`KmoM88/teleop_twist_keyboard:poc/pep621-ament-python`](https://github.com/KmoM88/teleop_twist_keyboard/tree/poc/pep621-ament-python) (`962e0e9`, `setuptools.build_meta` — single-file `py-modules` node, live PTY keystroke -> `/cmd_vel` `Twist` DDS verification via `ros2 run`, `colcon test`).
+* **Manual GitHub Actions Workflow**: [`.github/workflows/ros2_pep621_poc.yml`](.github/workflows/ros2_pep621_poc.yml) — verified passing across `target=all` in run [40795039655](https://github.com/KmoM88/colcon-roadmap/actions/runs/40795039655).
 
 ```bash
-# Run primary target (demo_nodes_py)
+# Run primary target locally (demo_nodes_py)
 ./poc/run_poc.sh
 
-# Run full 3-backend ROS 2 PoC matrix
+# Run full 3-backend ROS 2 PoC matrix locally
 ./poc/run_poc.sh --target all
+
+# Trigger manual GitHub Actions workflow run
+gh workflow run ros2_pep621_poc.yml -f target=all
 ```
