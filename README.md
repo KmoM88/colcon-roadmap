@@ -38,7 +38,7 @@ Direct invocation of `setup.py install` / `develop` has been deprecated across t
 | **[Roadmap](roadmap.md)** | Architectural evolution, feature flags, delivered feature branches, and Stage 4 Group A / Group B summary. |
 | **[Stage 4 Branch Implementation Record](docs/plans/stage4_branch_plan.md)** | Branch-by-branch design, commit SHAs, file changes, edge cases, and fork CI results for Stage 4 Group A (`master`) and Stage 4 Group B (`#750`). |
 | **[Pitfalls & Remediation Plan](docs/plans/pitfalls_and_remediation_plan.md)** | Audit of 10 architectural pitfalls (`ros2 run`, `colcon test`, data-files parity, `ScriptMaker` cache, etc.) and staged PR remediation matrix. |
-| **[Implemented Results Summary (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Published results-only summary of merged foundations, delivered PRs, Stage 4 fork CI validation, and ROS 2 Jazzy PoC ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
+| **[Architecture Summary & Staged Adoption Plan (Gist)](https://gist.github.com/KmoM88/0357abff37b5a32ab801cac7d399d4ed)** | Published summary and staged adoption plan for standard Python builds across `colcon-core` and `colcon-ros` ([docs/proposals/pep621_pep660_upstream_proposal.md](docs/proposals/pep621_pep660_upstream_proposal.md)). |
 | **[Dockerized ROS 2 Jazzy PoC](poc/README.md)** | Reproducible 6-stage Docker & GitHub Actions PoC building and running official `ros2/*` packages (`demo_nodes_py`, `examples_rclpy_minimal_*`, `teleop_twist_keyboard`) with pure `pyproject.toml`. |
 | **[Migration Instructions](migration_instructions.md)** | Transition strategy from `colcon-python-project` to native `colcon-core`. |
 
