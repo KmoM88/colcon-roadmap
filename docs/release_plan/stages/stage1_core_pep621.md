@@ -43,6 +43,9 @@ Upstream branch `colcon/colcon-core:cottsay/pep621` (`80acf29`) introduced the c
 4. **Keep Identification Priority (`PRIORITY = 90` vs `80`) Separate from `#750`**:
    - *Decision*: Documented the alphabetical tie between `'pep621'` (`PRIORITY = 90`) and `'python_setup_py'` (`PRIORITY = 90` in `colcon-python-setup-py`) in [pr_750_priority_comment.md](../../pr/pr_750_priority_comment.md) rather than modifying production identification priority inside `#750`.
    - *Rationale*: Keeps `#750` 100% test-scoped while preserving a ready-to-apply 1-line policy adjustment if maintainers prefer `setup.py` precedence on hybrid repositories.
+5. **Optional Pre-Production Gating via `pep621_builds` Feature Flag**:
+   - *Decision*: Prepared the `is_feature_flag_set('pep621_builds')` guard pattern in [pr_description_pep621.md](../../pr/pr_description_pep621.md) as a documented risk mitigation option for upstream maintainers.
+   - *Rationale*: Gives maintainers the option to roll out native `python.project` builds initially as an opt-in trial via `COLCON_FEATURE_FLAGS=pep621_builds` if desired prior to graduating it to default behavior via `IMPLEMENTED_FLAGS`.
 
 ---
 
