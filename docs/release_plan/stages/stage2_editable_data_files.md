@@ -46,6 +46,13 @@ PEP 660 standardizes editable Python module imports (via `.pth` files or import 
 4. **Cross-Distribution `setuptools < 70.1` `wheel` Guard & Cache Isolation in Tests**:
    - *Decision*: Guarded real `setuptools.build_meta` integration tests with `if Version(st.__version__) < Version('70.1.0'): pytest.importorskip('wheel')` and added an `autouse=True` fixture clearing `_ENTRY_POINTS_CACHE` and `_extension_instances`.
    - *Rationale*: Ubuntu 22.04/24.04 and Debian `stdeb` runners ship `setuptools < 70.1` where `bdist_wheel` lives in the external `wheel` package, and `test_extension_point.py` mutates `_ENTRY_POINTS_CACHE` earlier in full-suite runs.
+5. **Architectural Placement: Symlinks to Git Source Tree vs. Wheel/Zip or Environment Hooks**:
+   - *Considered Alternatives*: Symlinking directly to internal paths in the `.whl` ZIP archive or deferring symlinking to environment hooks (`local_setup.bash`).
+   - *Why Rejected*:
+     - *Filesystem constraint*: A `.whl` is a single binary ZIP archive; OS filesystems cannot create symbolic links to paths internal to an unextracted zip archive (`ENOTDIR`).
+     - *Editable semantics*: Wheels are static build-time archives; pointing to a wheel defeats `--symlink-install` because edits in `src/` would never reflect live. Symlinks must point directly to the Git source workspace.
+     - *Environment hygiene*: Colcon environment hooks execute upon shell startup (`source setup.bash`) and must never perform disk writes or mutate filesystems.
+     - *PEP 376 compliance*: Replacing unpacked static `.data/` copies with OS symlinks directly inside `PythonProjectBuildTask.build()` and recording them without hash or size (`path,,`) in `RECORD` maintains standard wheel format validity and ensures clean uninstalls and rebuilds via `remove_distributions()`.
 
 ---
 

@@ -49,6 +49,9 @@ In ROS 2, `RosPackageIdentification` identifies any package containing `package.
 5. **Dual-Manifest `<build_depend>` Convention for `rosdep`**:
    - *Decision*: Documented that ROS 2 `pyproject.toml` packages declare their PEP 518 build backend in `package.xml` (e.g., `<build_depend>python3-hatchling</build_depend>`, `<build_depend>python3-flit-core</build_depend>`, or `<build_depend>python3-setuptools</build_depend>` + `<build_depend>python3-wheel</build_depend>` on distros with `setuptools < 70.1`).
    - *Rationale*: Because `colcon` runs non-isolated builds against the system/workspace environment and `rosdep` reads `package.xml`, declaring backend `<build_depend>` tags keeps ROS buildfarm and `rosdep install` workflows deterministic.
+6. **Cross-Repository Release Gating & Runtime Exception Fallbacks**:
+   - *Decision*: In `_build_python_project()`, guarded `from colcon_core.task.python_project.build import PythonProjectBuildTask` with `try...except ImportError` emitting a clean diagnostic error rather than an unhandled traceback, and used `inspect.signature` to dynamically inspect and pass `script_dir_override` only when present in the signature.
+   - *Rationale*: Prevents crashes if an environment runs an interim `colcon-core` build, while the Wave 3 release plan enforces dependency gating in `setup.cfg` (`install_requires = colcon-core >= <wave2_version>`).
 
 ---
 

@@ -116,7 +116,9 @@ Early prototyping in [colcon/colcon-python-project#1](https://github.com/colcon/
      - Backends without external data-file configuration (such as `flit_core`) return an empty mapping rather than reading unrelated configuration files.
 3. **In-Place `.dist-info/RECORD` Deduplication**:
    - Keyed `.dist-info/RECORD` updates by relative path (`record_map`) so replacing static wheel `.data/` copies with symbolic links updates existing `RECORD` entries in place without duplicate lines or stale digests.
-4. **Unit & Multi-Backend Integration Coverage**:
+4. **Direct Git Source Tree Symlinking (Filesystem & PEP 376 Rationale)**:
+   - Symlinks are created directly between `<install_base>/share/...` and the package source tree in `src/`. Symlinking directly into `.whl` files is impossible on operating systems (a wheel is a single binary zip file, not a filesystem directory) and would defeat editable testing since wheels are static build snapshots. Replaces unpacked static copies in-place and records them without hash/size in `RECORD`.
+5. **Unit & Multi-Backend Integration Coverage**:
    - Added backend-independent unit tests (`test_get_data_files_mapping_by_backend`, `test_build_task_script_override_and_record_update`) and real-backend integration tests (`test_integration_symlink_install_data_files`, `test_integration_setuptools_data_files_and_script_override`) with entry-point cache isolation and `setuptools < 70.1` `wheel` guards.
 
 ---
@@ -140,6 +142,8 @@ Early prototyping in [colcon/colcon-python-project#1](https://github.com/colcon/
    - Populates `desc.metadata['get_python_setup_options']` from `pyproject.toml` (`[project.dependencies]`, `[project.optional-dependencies]`, and PEP 735 `[dependency-groups]` test groups, merged with `setup.cfg` `[options]` when present) when `setup.py` is absent, enabling `AmentPythonTestTask` / `PytestPythonTestingStep` to match `pytest`.
 4. **Dual-Manifest Build Dependency Convention (`package.xml` + `pyproject.toml`)**:
    - Because `colcon` invokes PEP 517 hooks without pip-style isolated virtual environments, ROS 2 `ament_python` packages using `pyproject.toml` declare their PEP 518 build backend as `<build_depend>` in `package.xml` (for example `python3-flit-core`, `python3-hatchling`, or `python3-setuptools` plus `python3-wheel` on distributions with `setuptools < 70.1` such as Ubuntu 22.04/24.04) so `rosdep install` provisions them in CI and buildfarm environments.
+5. **Release Dependency Gating & Graceful Runtime Fallbacks**:
+   - `_build_python_project()` guards the `PythonProjectBuildTask` import with `try...except ImportError` emitting a clean diagnostic error rather than an unhandled traceback, and uses `inspect.signature` to dynamically pass `script_dir_override` only when supported. Release Wave 3 enforces minimum `colcon-core` versions in `setup.cfg`.
 
 ---
 
